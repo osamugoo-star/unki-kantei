@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>運気鑑定 受付</title>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Klee+One:wght@600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* =========================================================
+       運気鑑定 受付フォーム index.html
+       ---------------------------------------------------------
+       Ver1.0 (2026-10-27) 初期リリース
+         - なんでもコレクション register.html Ver1.1 の構成
+           （カード型フォーム・画像プレビュー・トースト・Supabase連携）を流用
+         - 京都・奈良の寺社を思わせる落ち着いたデザインに変更
+           （和紙色の地・墨色の文字・控えめな朱・金茶の細線）
+       Ver1.1 (2026-10-27) デザイン微修正
+         - 項目名（一〜五）を楷書風の Klee One に変更し、16px → 20px に拡大
+         - 背景を和紙の点描から青海波（SVGタイル・金茶の淡い線）に変更
+         - 青海波の上でも読みやすいよう、導入文に和紙色の下地を追加
+       Ver1.2 (2026-10-27) 青海波の線を金茶から水浅葱（水を感じる落ち着いた水色）に変更
+       ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --washi:      #F4EFE4;  /* 地：和紙 */
+      --washi-deep: #EAE2D0;  /* 一段濃い和紙 */
+      --sumi:       #2E2A26;  /* 文字：墨 */
+      --sumi-soft:  #6A6258;  /* 補足文字 */
+      --shu:        #A8432F;  /* 朱：控えめに使う */
+      --kin:        #A88B57;  /* 金茶：細線 */
+      --koke:       #5F6B4E;  /* 苔色：完了表示 */
+      --line:       #D3C8B2;  /* 罫線 */
+      --white:      #FBF8F2;
+      --kaisho: 'Klee One', 'HG正楷書体-PRO', serif;  /* Ver1.1 追加：項目名用 */
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--washi);
+      color: var(--sumi);
+      min-height: 100vh;
+      padding-bottom: 64px;
+      line-height: 1.8;
+      /* Ver1.0: 和紙の点描 → Ver1.1: 青海波に変更
+         円を「上の段→下の段」の順に重ね、下の波が上の波を隠す本来の描き方
+         Ver1.2: 線の色を金茶 #A88B57（濃さ0.28）→ 水浅葱 #5E9DB8（濃さ0.35）に変更 */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cdefs%3E%3Cg id='w'%3E%3Ccircle r='20' fill='%23F4EFE4'/%3E%3Ccircle r='20' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='15' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='10' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='5' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23w' x='0' y='0'/%3E%3Cuse href='%23w' x='40' y='0'/%3E%3Cuse href='%23w' x='20' y='10'/%3E%3Cuse href='%23w' x='0' y='20'/%3E%3Cuse href='%23w' x='40' y='20'/%3E%3C/svg%3E");
+      background-size: 72px 36px;
+    }
+
+    .mincho { font-family: 'Shippori Mincho', serif; }
+
+    /* ===== ヘッダー ===== */
+    header {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 48px 20px 8px;
+      text-align: center;
+    }
+    .seal {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px; height: 44px;
+      border: 2px solid var(--shu);
+      color: var(--shu);
+      font-family: 'Shippori Mincho', serif;
+      font-size: 22px;
+      font-weight: 700;
+      border-radius: 4px;
+      margin-bottom: 18px;
+      opacity: 0.85;
+    }
+    h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(26px, 7vw, 34px);
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      padding-left: 0.35em; /* letter-spacing の右余白を相殺 */
+    }
+    .rule {
+      width: 120px;
+      height: 5px;
+      margin: 14px auto;
+      border-top: 1px solid var(--kin);
+      border-bottom: 1px solid var(--kin);
+    }
+    .lead {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 15px;
+      letter-spacing: 0.12em;
+      color: var(--sumi-soft);
+    }
+
+    .intro {
+      max-width: 448px;
+      margin: 24px auto 0;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--sumi-soft);
+      background: rgba(244,239,228,0.92);  /* Ver1.1 追加：青海波の上での可読性 */
+      border-radius: 4px;
+    }
+    @media (max-width: 480px) { .intro { margin-left: 16px; margin-right: 16px; } }
+
+    /* ===== フォーム ===== */
+    .form-wrap {
+      max-width: 480px;
+      margin: 28px auto 0;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 22px 20px;
+    }
+    .label {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      /* Ver1.0: Shippori Mincho 16px → Ver1.1: 楷書風 Klee One 20px */
+      font-family: var(--kaisho);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+    .label .num {
+      color: var(--kin);
+      font-size: 18px;
+      letter-spacing: 0.1em;
+    }
+    .label .req {
+      margin-left: auto;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--shu);
+      border: 1px solid var(--shu);
+      border-radius: 3px;
+      padding: 0 6px;
+      line-height: 1.7;
+    }
+    .label .opt {
+      margin-left: auto;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 11px;
+      color: var(--sumi-soft);
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      padding: 0 6px;
+      line-height: 1.7;
+    }
+
+    .input, .textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--washi);
+      color: var(--sumi);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 16px; /* iPhoneで拡大されない最小サイズ */
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input:focus, .textarea:focus { border-color: var(--kin); }
+    .input::placeholder, .textarea::placeholder { color: #B5AC9C; }
+    .textarea { min-height: 96px; resize: vertical; line-height: 1.7; }
+
+    .hint {
+      font-size: 12px;
+      color: var(--sumi-soft);
+      margin-top: 10px;
+      line-height: 1.7;
+    }
+
+    /* 選択ボタン（場所・時期） */
+    .choices { display: grid; gap: 10px; }
+    .choices.three { grid-template-columns: repeat(3, 1fr); }
+    .choices.two   { grid-template-columns: repeat(2, 1fr); }
+    .choice {
+      position: relative;
+      padding: 14px 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--washi);
+      color: var(--sumi);
+      font-family: 'Shippori Mincho', serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .choice small {
+      display: block;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--sumi-soft);
+      margin-top: 2px;
+    }
+    .choice.selected {
+      background: var(--sumi);
+      border-color: var(--sumi);
+      color: var(--white);
+    }
+    .choice.selected small { color: #D9D0C0; }
+    .choice:disabled {
+      cursor: not-allowed;
+      color: #B5AC9C;
+      background: var(--washi-deep);
+    }
+
+    /* 写真 */
+    .upload {
+      position: relative;
+      border: 1px dashed var(--kin);
+      border-radius: 4px;
+      padding: 28px 16px;
+      text-align: center;
+      background: var(--washi);
+      cursor: pointer;
+    }
+    .upload input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .upload-mark {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 28px;
+      color: var(--kin);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .upload-text { font-size: 14px; color: var(--sumi-soft); }
+    .preview {
+      display: none;
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      margin-top: 12px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+    }
+    .notes {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: var(--washi);
+      border-left: 2px solid var(--kin);
+      font-size: 12px;
+      color: var(--sumi-soft);
+    }
+    .notes p { font-weight: 700; color: var(--sumi); margin-bottom: 4px; }
+    .notes ul { padding-left: 1.2em; }
+
+    /* 送信ボタン */
+    .submit {
+      margin-top: 6px;
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 4px;
+      background: var(--shu);
+      color: var(--white);
+      font-family: 'Shippori Mincho', serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .submit:active { opacity: 0.85; }
+    .submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* 完了表示 */
+    .done {
+      display: none;
+      max-width: 480px;
+      margin: 32px auto 0;
+      padding: 0 16px;
+    }
+    .done .card { text-align: center; padding: 36px 22px; }
+    .done h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 20px;
+      letter-spacing: 0.15em;
+      color: var(--koke);
+      margin-bottom: 14px;
+    }
+    .done p { font-size: 14px; color: var(--sumi-soft); }
+    .done .again {
+      margin-top: 24px;
+      padding: 12px 24px;
+      border: 1px solid var(--sumi);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--sumi);
+      font-family: 'Shippori Mincho', serif;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    /* トースト */
+    .toast {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      max-width: calc(100% - 32px);
+      background: var(--sumi);
+      color: var(--white);
+      padding: 12px 22px;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 200;
+      transition: transform 0.3s ease;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--shu); }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: #B5AC9C;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="seal">鑑</div>
+    <h1>運気鑑定</h1>
+    <div class="rule"></div>
+    <p class="lead">暮らしの場所を整え、明日へ一歩</p>
+  </header>
+
+  <p class="intro">
+    お預かりした写真をもとに、日本の暦や昔ながらの住まいの知恵から、
+    これからの過ごし方をそっと添えてお返しします。
+    鑑定書は後日お届けします。
+  </p>
+
+  <div class="form-wrap" id="formWrap">
+
+    <!-- 一　お名前 -->
+    <div class="card">
+      <div class="label"><span class="num">一</span>お名前<span class="req">必須</span></div>
+      <input class="input" type="text" id="name" maxlength="30" placeholder="ニックネームでも構いません" />
+    </div>
+
+    <!-- 二　鑑定する場所（CONFIG.PLACES から生成） -->
+    <div class="card">
+      <div class="label"><span class="num">二</span>鑑定する場所<span class="req">必須</span></div>
+      <div class="choices three" id="placeChoices"></div>
+      <p class="hint">※ ただいまは玄関のみ承っています。</p>
+    </div>
+
+    <!-- 三　撮影の時期（CONFIG.PHASES から生成） -->
+    <div class="card">
+      <div class="label"><span class="num">三</span>撮影の時期<span class="req">必須</span></div>
+      <div class="choices two" id="phaseChoices"></div>
+      <p class="hint">※ 一週間後の写真は、初回と同じ位置・同じ向きから撮ってください。</p>
+    </div>
+
+    <!-- 四　写真 -->
+    <div class="card">
+      <div class="label"><span class="num">四</span>写真<span class="req">必須</span></div>
+      <div class="upload">
+        <input type="file" id="photo" accept="image/*" />
+        <div class="upload-mark" id="uploadMark">＋</div>
+        <div class="upload-text" id="uploadText">タップして写真を選ぶ</div>
+      </div>
+      <img class="preview" id="preview" alt="選んだ写真" />
+      <div class="notes">
+        <p>撮影のお願い</p>
+        <ul>
+          <li>人の顔や、書類・パソコン画面が写らないようにしてください</li>
+          <li>明るい時間帯に、場所の全体が入るように撮ってください</li>
+          <li>撮った位置を覚えておくと、一週間後の比較がしやすくなります</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 五　気になっていること -->
+    <div class="card">
+      <div class="label"><span class="num">五</span>気になっていること<span class="opt">任意</span></div>
+      <textarea class="textarea" id="memo" maxlength="200" placeholder="例）最近なんとなく落ち着かない、家族が忙しそう など"></textarea>
+    </div>
+
+    <button class="submit" id="submit">鑑定をお願いする</button>
+  </div>
+
+  <!-- 完了表示 -->
+  <div class="done" id="done">
+    <div class="card">
+      <h2>お預かりしました</h2>
+      <p>
+        ありがとうございます。<br>
+        鑑定書ができあがりましたら、お届けします。<br>
+        一週間後にも、同じ場所の写真をお願いしますね。
+      </p>
+      <button class="again" id="again">続けてもう一枚送る</button>
+    </div>
+  </div>
+
+  <footer>KAKERA PROJECT</footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // =========================================================
+    // 運気鑑定 受付フォーム index.html
+    // ---------------------------------------------------------
+    // Ver1.0 (2026-10-27) 初期リリース
+    //   - なんでもコレクション register.html Ver1.1 の処理を流用
+    //     （画像プレビュー・トースト・Supabase Storage/REST への登録）
+    //   - 項目：お名前／鑑定する場所／撮影の時期／写真／気になっていること
+    //   - 場所は玄関のみ受付。机まわり・居間は「準備中」で例示のみ
+    //   - 保存先は非公開バケット fortune、登録先は fortune_requests
+    //     （利用者は登録のみ可能・閲覧不可。設定は supabase_setup.sql）
+    //   - 送信前に写真を長辺2000pxのJPEGに縮小（失敗時は元画像のまま送信）
+    //   - 場所・時期の選択肢は CONFIG に集約（追加・受付開始は enabled を変えるだけ）
+    // Ver1.1 (2026-10-27) デザイン微修正のみ（処理の変更なし）
+    //   - 項目名を楷書風フォントで拡大、背景を青海波に変更（詳細は CSS 冒頭）
+    // =========================================================
+
+    // ---------- 設定（ここだけ直せば運用を変えられる） ----------
+    const CONFIG = {
+      SUPABASE_URL: 'https://stbmuewuqmckqzeokynq.supabase.co',
+      SUPABASE_KEY: 'sb_publishable_n4NhN1Fgoy-XETdivYstsQ_iUg1JaI6',
+      BUCKET: 'fortune',
+      TABLE:  'fortune_requests',
+      MAX_EDGE_PX:  2000,  // 縮小後の長辺
+      JPEG_QUALITY: 0.85,
+      PLACES: [
+        { code: 'entrance', label: '玄関',     enabled: true  },
+        { code: 'desk',     label: '机まわり', enabled: false },
+        { code: 'living',   label: '居間',     enabled: false },
+      ],
+      PHASES: [
+        { code: 'first', label: '初回',     sub: 'はじめての写真' },
+        { code: 'week1', label: '一週間後', sub: '比べるための写真' },
+      ],
+    };
+
+    // ---------- 状態 ----------
+    let selectedPlace = null;
+    let selectedPhase = null;
+    let selectedFile  = null;
+
+    // ---------- 選択ボタンの生成 ----------
+    function buildChoices(containerId, items, onSelect) {
+      const box = document.getElementById(containerId);
+      items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'choice';
+        btn.dataset.code = item.code;
+        const sub = item.enabled === false ? '準備中' : (item.sub || '');
+        btn.innerHTML = `${item.label}${sub ? `<small>${sub}</small>` : ''}`;
+        if (item.enabled === false) btn.disabled = true;
+        btn.addEventListener('click', () => {
+          box.querySelectorAll('.choice').forEach(b => b.classList.toggle('selected', b === btn));
+          onSelect(item.code);
+        });
+        box.appendChild(btn);
+      });
+    }
+    buildChoices('placeChoices', CONFIG.PLACES, code => { selectedPlace = code; });
+    buildChoices('phaseChoices', CONFIG.PHASES, code => { selectedPhase = code; });
+
+    // ---------- 写真プレビュー ----------
+    document.getElementById('photo').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      selectedFile = file;
+      const img = document.getElementById('preview');
+      img.src = URL.createObjectURL(file);
+      img.style.display = 'block';
+      img.onerror = () => { img.style.display = 'none'; }; // HEICなど表示できない形式
+      document.getElementById('uploadMark').textContent = '✓';
+      document.getElementById('uploadText').textContent = file.name;
+    });
+
+    // ---------- トースト ----------
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
+
+    // ---------- 写真の縮小（失敗したら元のまま） ----------
+    function shrinkImage(file) {
+      return new Promise(resolve => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, CONFIG.MAX_EDGE_PX / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(blob => {
+            URL.revokeObjectURL(url);
+            resolve(blob ? { blob, ext: 'jpg', type: 'image/jpeg' } : original());
+          }, 'image/jpeg', CONFIG.JPEG_QUALITY);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(original()); };
+        img.src = url;
+
+        function original() {
+          const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+          return { blob: file, ext, type: file.type || 'image/jpeg' };
+        }
+      });
+    }
+
+    // ---------- 日時文字列 yyyymmdd_hhmmss ----------
+    function stamp(d = new Date()) {
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+    }
+
+    // ---------- 写真のアップロード（非公開バケット） ----------
+    async function uploadPhoto() {
+      const { blob, ext, type } = await shrinkImage(selectedFile);
+      const rand = Math.random().toString(36).slice(2, 6);
+      // 例）entrance/20261027_153012_first_k3x9.jpg
+      const path = `${selectedPlace}/${stamp()}_${selectedPhase}_${rand}.${ext}`;
+      const res = await fetch(`${CONFIG.SUPABASE_URL}/storage/v1/object/${CONFIG.BUCKET}/${path}`, {
+        method: 'POST',
+        headers: {
+          'apikey': CONFIG.SUPABASE_KEY,
+          'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+          'Content-Type': type,
+        },
+        body: blob,
+      });
+      if (!res.ok) throw new Error('写真の送信に失敗しました');
+      return path;
+    }
+
+    // ---------- 送信 ----------
+    document.getElementById('submit').addEventListener('click', async () => {
+      const name = document.getElementById('name').value.trim();
+      const memo = document.getElementById('memo').value.trim();
+
+      if (!name)          { showToast('お名前を入力してください', 'error'); return; }
+      if (!selectedPlace) { showToast('鑑定する場所を選んでください', 'error'); return; }
+      if (!selectedPhase) { showToast('撮影の時期を選んでください', 'error'); return; }
+      if (!selectedFile)  { showToast('写真を選んでください', 'error'); return; }
+
+      const btn = document.getElementById('submit');
+      btn.disabled = true;
+      btn.textContent = 'お預かりしています…';
+
+      try {
+        const photoPath = await uploadPhoto();
+        const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${CONFIG.TABLE}`, {
+          method: 'POST',
+          headers: {
+            'apikey': CONFIG.SUPABASE_KEY,
+            'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({
+            name,
+            place: selectedPlace,
+            phase: selectedPhase,
+            memo: memo || null,
+            photo_path: photoPath,
+          }),
+        });
+        if (!res.ok) throw new Error('受付の登録に失敗しました');
+
+        document.getElementById('formWrap').style.display = 'none';
+        document.getElementById('done').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        showToast(e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '鑑定をお願いする';
+      }
+    });
+
+    // ---------- 続けてもう一枚（名前は残す） ----------
+    document.getElementById('again').addEventListener('click', () => {
+      selectedPhase = null;
+      selectedFile  = null;
+      document.getElementById('memo').value = '';
+      document.getElementById('photo').value = '';
+      document.getElementById('preview').style.display = 'none';
+      document.getElementById('uploadMark').textContent = '＋';
+      document.getElementById('uploadText').textContent = 'タップして写真を選ぶ';
+      document.querySelectorAll('#phaseChoices .choice').forEach(b => b.classList.remove('selected'));
+      document.getElementById('done').style.display = 'none';
+      document.getElementById('formWrap').style.display = 'flex';
+    });
+  </script>
+</body>
+</html>
