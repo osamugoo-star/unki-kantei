@@ -18,6 +18,7 @@
          - 画面下に「受付へ戻る」ボタンを追加（「別の受付番号で見る」と並べる・印刷時は非表示）
          - 鑑定書のカード同士がくっついて見える不具合を修正（#out にも 18px の間隔）
          - 青海波の線を濃く：水浅葱 #5E9DB8（濃さ0.35）→ 深めの青 #3E7FA6（濃さ0.5）
+       Ver1.2 (2026-10-28) ヘッダーに和紙色の下地を追加（受付フォーム Ver2.2 と揃える）
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -47,7 +48,12 @@
       background-size: 72px 36px;
     }
 
-    header { max-width: 640px; margin: 0 auto; padding: 48px 20px 8px; text-align: center; }
+    /* Ver1.1まで: padding 48px 20px 8px・下地なし → Ver1.2: 和紙色の下地を敷く */
+    header {
+      max-width: 608px; margin: 36px auto 0; padding: 26px 18px 20px; text-align: center;
+      background: rgba(244,239,228,0.92); border-radius: 4px;
+    }
+    @media (max-width: 640px) { header { margin-left: 16px; margin-right: 16px; } }
     .seal {
       display: inline-flex; align-items: center; justify-content: center;
       width: 44px; height: 44px; border: 2px solid var(--shu); color: var(--shu);
@@ -206,6 +212,10 @@
     //   - PDF保存はブラウザの印刷機能を使用（PC・スマホ共通）
     // Ver1.1 (2026-10-28)
     //   - 「別の受付番号で見る」を #out の中から下のナビ（#nav）へ移し、「受付へ戻る」と並べる
+    // Ver1.2 (2026-10-28)
+    //   - 結果を表示できた受付番号を、この端末のブラウザ（localStorage）に記憶
+    //     LINEで届いたURLから開いた場合も、次からは受付フォームの「鑑定結果を見る」に表示される
+    //   - 記憶のキーは unki_kantei_codes（受付フォーム Ver2.2 と共通。最大20件）
     // =========================================================
 
     const CONFIG = {
@@ -240,6 +250,18 @@
       e.target.value = c.length > 4 ? formatCode(c) : c;
     });
 
+    // ---------- この端末に受付番号を記憶（Ver1.2 追加） ----------
+    function rememberCode(code, name, date) {
+      try {
+        const KEY = 'unki_kantei_codes';
+        const list = JSON.parse(localStorage.getItem(KEY)) || [];
+        const old  = list.find(x => x.code === code);
+        const rest = list.filter(x => x.code !== code);
+        rest.unshift({ code, name: name || old?.name || '', date: old?.date || date || new Date().toISOString() });
+        localStorage.setItem(KEY, JSON.stringify(rest.slice(0, 20)));
+      } catch { /* 保存できなくても表示は続行 */ }
+    }
+
     // ---------- 取得 ----------
     async function load(code) {
       const btn = $('showBtn');
@@ -258,6 +280,7 @@
         const data = await res.json();
         if (!data) throw new Error('その受付番号は見つかりませんでした');
         history.replaceState(null, '', `?code=${code}`);
+        rememberCode(code, data.name, data.requests?.[0]?.created_at);  // Ver1.2 追加
         render(code, data);
       } catch (e) {
         showToast(e.message);

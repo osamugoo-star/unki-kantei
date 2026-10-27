@@ -23,6 +23,9 @@
          - 受付番号の入力欄（一週間後のときだけ表示）のスタイルを追加
          - 完了画面に受付番号の大きな表示・コピーボタン・結果ページへのボタンを追加
        Ver2.1 (2026-10-28) 青海波の線を濃く：#5E9DB8（濃さ0.35）→ 深めの青 #3E7FA6（濃さ0.5）。結果ページ Ver1.1 と揃える
+       Ver2.2 (2026-10-28)
+         - ヘッダー（運気鑑定・キャッチコピー）に導入文と同じ和紙色の下地を追加（青海波と重なって読みにくいため）
+         - 「鑑定結果を見る」カードのスタイルを追加
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -55,7 +58,12 @@
     }
 
     /* ===== ヘッダー ===== */
-    header { max-width: 480px; margin: 0 auto; padding: 48px 20px 8px; text-align: center; }
+    /* Ver2.1まで: padding 48px 20px 8px・下地なし → Ver2.2: 和紙色の下地を敷く */
+    header {
+      max-width: 448px; margin: 36px auto 0; padding: 26px 18px 20px; text-align: center;
+      background: rgba(244,239,228,0.92); border-radius: 4px;
+    }
+    @media (max-width: 480px) { header { margin-left: 16px; margin-right: 16px; } }
     .seal {
       display: inline-flex; align-items: center; justify-content: center;
       width: 44px; height: 44px;
@@ -174,6 +182,18 @@
     }
     .btn-fill { background: var(--sumi); color: var(--white); }
 
+    /* 鑑定結果を見る（Ver2.2 追加） */
+    .my-card { margin-top: 18px; }
+    .my-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .my-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 10px 14px; border: 1px solid var(--line); border-radius: 4px;
+      background: var(--washi); color: var(--sumi); text-decoration: none;
+    }
+    .my-item .c { font-family: 'Shippori Mincho', serif; font-weight: 700; letter-spacing: 0.12em; }
+    .my-item .s { font-size: 12px; color: var(--sumi-soft); text-align: right; }
+    .my-card .btn-line { display: block; text-align: center; }
+
     /* トースト */
     .toast {
       position: fixed; bottom: 28px; left: 50%;
@@ -259,6 +279,14 @@
     </div>
 
     <button class="submit" id="submit">鑑定をお願いする</button>
+
+    <!-- Ver2.2 追加：鑑定結果への入口 -->
+    <div class="card my-card">
+      <div class="label">鑑定結果を見る</div>
+      <div class="my-list" id="myList"></div>
+      <a class="btn-line" href="result.html">受付番号を入力して見る</a>
+      <p class="hint">※ この端末で受け付けた番号だけが表示されます。機種変更や履歴の削除で消えることがあるので、受付番号は控えておいてください。</p>
+    </div>
   </div>
 
   <!-- 完了表示（Ver2.0：受付番号と結果ページへの導線を追加） -->
@@ -299,12 +327,17 @@
     // Ver1.1 (2026-10-27) デザイン微修正のみ（処理の変更なし）
     //   - 項目名を楷書風フォントで拡大、背景を青海波に変更（詳細は CSS 冒頭）
     // Ver1.2 (2026-10-27) 青海波の色変更のみ（処理の変更なし）
-    // Ver2.1 (2026-10-28) 青海波の色変更のみ（処理の変更なし）
     // Ver2.0 (2026-10-27) 受付番号を追加（設定は supabase_v2.sql）
     //   - 初回：8桁の受付番号を発行（紛らわしい I O 0 1 は使わない）
     //   - 一週間後：初回の受付番号を入力。送信前に番号が存在するか確認
     //   - 写真のファイル名に受付番号を含める（例 entrance/K7M3QX2A_first_20261027_153012.jpg）
     //   - 完了画面に受付番号・コピー・結果ページ（result.html）へのボタンを表示
+    // Ver2.1 (2026-10-28) 青海波の色変更のみ（処理の変更なし）
+    // Ver2.2 (2026-10-28) 「鑑定結果を見る」を追加
+    //   - 送信した受付番号をこの端末のブラウザ（localStorage）にだけ記憶し、ボタンで一覧表示
+    //     他の人の番号は表示しない（家族の写真を守るため、全件の一覧は作らない）
+    //   - 記憶のキーは unki_kantei_codes（結果ページ Ver1.2 と共通。最大20件）
+    //   - 保存できない環境（プライベートモード等）では一覧が出ないだけで、他の動作には影響しない
     // =========================================================
 
     // ---------- 設定（ここだけ直せば運用を変えられる） ----------
@@ -513,8 +546,42 @@
       }
     });
 
+    // ---------- この端末の受付番号（Ver2.2 追加） ----------
+    const STORE_KEY = 'unki_kantei_codes';
+    const STORE_MAX = 20;
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function loadCodes() {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
+    }
+    function saveCode(code, name) {
+      try {
+        const list = loadCodes().filter(x => x.code !== code);
+        const old  = loadCodes().find(x => x.code === code);
+        list.unshift({ code, name: name || old?.name || '', date: old?.date || new Date().toISOString() });
+        localStorage.setItem(STORE_KEY, JSON.stringify(list.slice(0, STORE_MAX)));
+      } catch { /* 保存できなくても続行 */ }
+    }
+    function renderMyCodes() {
+      const box = document.getElementById('myList');
+      const list = loadCodes();
+      box.style.display = list.length ? 'flex' : 'none';
+      box.innerHTML = list.map(x => {
+        const d = new Date(x.date);
+        const day = isNaN(d) ? '' : `${d.getMonth() + 1}月${d.getDate()}日受付`;
+        return `<a class="my-item" href="result.html?code=${esc(x.code)}">
+                  <span class="c">${esc(formatCode(x.code))}</span>
+                  <span class="s">${esc(x.name)}${x.name ? ' さま<br>' : ''}${day}</span>
+                </a>`;
+      }).join('');
+    }
+    renderMyCodes();
+
     // ---------- 完了画面（Ver2.0 追加） ----------
     function showDone(code) {
+      saveCode(code, document.getElementById('name').value.trim());  // Ver2.2 追加
+      renderMyCodes();
       document.getElementById('doneText').innerHTML = selectedPhase === 'first'
         ? 'ありがとうございます。<br>鑑定ができあがりましたら、結果ページでご覧いただけます。<br>一週間後にも、同じ場所の写真をお願いしますね。'
         : 'ありがとうございます。<br>初回の写真と見比べて鑑定します。<br>できあがりましたら、結果ページでご覧いただけます。';
