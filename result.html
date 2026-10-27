@@ -19,6 +19,7 @@
          - 鑑定書のカード同士がくっついて見える不具合を修正（#out にも 18px の間隔）
          - 青海波の線を濃く：水浅葱 #5E9DB8（濃さ0.35）→ 深めの青 #3E7FA6（濃さ0.5）
        Ver1.2 (2026-10-28) ヘッダーに和紙色の下地を追加（受付フォーム Ver2.2 と揃える）
+       Ver1.3 (2026-10-28) 画面下の「別の受付番号で見る」「受付へ戻る」ボタンに和紙色の下地を追加
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -68,6 +69,9 @@
     #out { display: flex; flex-direction: column; gap: 18px; }  /* Ver1.1 追加：カードの間隔 */
     #out:empty { display: none; }
     .nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 6px; }  /* Ver1.1 追加 */
+    /* Ver1.3 追加：青海波と重なって読みにくいため、ボタンに和紙色の下地（カードと同じ色） */
+    .nav .btn-line { background: var(--white); }
+    .nav .btn-line:hover { background: var(--washi-deep); }
     .card { background: var(--white); border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; }
     .label { display: flex; align-items: baseline; gap: 10px; font-family: var(--kaisho); font-size: 20px; font-weight: 600; letter-spacing: 0.06em; margin-bottom: 14px; }
     .label .num { color: var(--kin); font-size: 18px; }
