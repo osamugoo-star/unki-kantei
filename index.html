@@ -22,6 +22,7 @@
        Ver2.0 (2026-10-27) 受付番号と結果ページへの導線を追加
          - 受付番号の入力欄（一週間後のときだけ表示）のスタイルを追加
          - 完了画面に受付番号の大きな表示・コピーボタン・結果ページへのボタンを追加
+       Ver2.1 (2026-10-28) 青海波の線を濃く：#5E9DB8（濃さ0.35）→ 深めの青 #3E7FA6（濃さ0.5）。結果ページ Ver1.1 と揃える
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -47,8 +48,9 @@
       line-height: 1.8;
       /* Ver1.0: 和紙の点描 → Ver1.1: 青海波に変更
          円を「上の段→下の段」の順に重ね、下の波が上の波を隠す本来の描き方
-         Ver1.2: 線の色を金茶 #A88B57（濃さ0.28）→ 水浅葱 #5E9DB8（濃さ0.35）に変更 */
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cdefs%3E%3Cg id='w'%3E%3Ccircle r='20' fill='%23F4EFE4'/%3E%3Ccircle r='20' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='15' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='10' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='5' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23w' x='0' y='0'/%3E%3Cuse href='%23w' x='40' y='0'/%3E%3Cuse href='%23w' x='20' y='10'/%3E%3Cuse href='%23w' x='0' y='20'/%3E%3Cuse href='%23w' x='40' y='20'/%3E%3C/svg%3E");
+         Ver1.2: 線の色を金茶 #A88B57（濃さ0.28）→ 水浅葱 #5E9DB8（濃さ0.35）に変更
+         Ver2.1: 水浅葱 #5E9DB8（濃さ0.35）→ 深めの青 #3E7FA6（濃さ0.5）に変更 */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cdefs%3E%3Cg id='w'%3E%3Ccircle r='20' fill='%23F4EFE4'/%3E%3Ccircle r='20' fill='none' stroke='%233E7FA6' stroke-opacity='0.5' stroke-width='0.7'/%3E%3Ccircle r='15' fill='none' stroke='%233E7FA6' stroke-opacity='0.5' stroke-width='0.7'/%3E%3Ccircle r='10' fill='none' stroke='%233E7FA6' stroke-opacity='0.5' stroke-width='0.7'/%3E%3Ccircle r='5' fill='none' stroke='%233E7FA6' stroke-opacity='0.5' stroke-width='0.7'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23w' x='0' y='0'/%3E%3Cuse href='%23w' x='40' y='0'/%3E%3Cuse href='%23w' x='20' y='10'/%3E%3Cuse href='%23w' x='0' y='20'/%3E%3Cuse href='%23w' x='40' y='20'/%3E%3C/svg%3E");
       background-size: 72px 36px;
     }
 
@@ -297,6 +299,7 @@
     // Ver1.1 (2026-10-27) デザイン微修正のみ（処理の変更なし）
     //   - 項目名を楷書風フォントで拡大、背景を青海波に変更（詳細は CSS 冒頭）
     // Ver1.2 (2026-10-27) 青海波の色変更のみ（処理の変更なし）
+    // Ver2.1 (2026-10-28) 青海波の色変更のみ（処理の変更なし）
     // Ver2.0 (2026-10-27) 受付番号を追加（設定は supabase_v2.sql）
     //   - 初回：8桁の受付番号を発行（紛らわしい I O 0 1 は使わない）
     //   - 一週間後：初回の受付番号を入力。送信前に番号が存在するか確認
