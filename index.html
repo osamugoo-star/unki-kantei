@@ -19,6 +19,9 @@
          - 背景を和紙の点描から青海波（SVGタイル・金茶の淡い線）に変更
          - 青海波の上でも読みやすいよう、導入文に和紙色の下地を追加
        Ver1.2 (2026-10-27) 青海波の線を金茶から水浅葱（水を感じる落ち着いた水色）に変更
+       Ver2.0 (2026-10-27) 受付番号と結果ページへの導線を追加
+         - 受付番号の入力欄（一週間後のときだけ表示）のスタイルを追加
+         - 完了画面に受付番号の大きな表示・コピーボタン・結果ページへのボタンを追加
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -49,289 +52,139 @@
       background-size: 72px 36px;
     }
 
-    .mincho { font-family: 'Shippori Mincho', serif; }
-
     /* ===== ヘッダー ===== */
-    header {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 48px 20px 8px;
-      text-align: center;
-    }
+    header { max-width: 480px; margin: 0 auto; padding: 48px 20px 8px; text-align: center; }
     .seal {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      display: inline-flex; align-items: center; justify-content: center;
       width: 44px; height: 44px;
-      border: 2px solid var(--shu);
-      color: var(--shu);
-      font-family: 'Shippori Mincho', serif;
-      font-size: 22px;
-      font-weight: 700;
-      border-radius: 4px;
-      margin-bottom: 18px;
-      opacity: 0.85;
+      border: 2px solid var(--shu); color: var(--shu);
+      font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700;
+      border-radius: 4px; margin-bottom: 18px; opacity: 0.85;
+      background: var(--washi);
     }
     h1 {
       font-family: 'Shippori Mincho', serif;
-      font-size: clamp(26px, 7vw, 34px);
-      font-weight: 700;
-      letter-spacing: 0.35em;
-      padding-left: 0.35em; /* letter-spacing の右余白を相殺 */
+      font-size: clamp(26px, 7vw, 34px); font-weight: 700;
+      letter-spacing: 0.35em; padding-left: 0.35em;
     }
-    .rule {
-      width: 120px;
-      height: 5px;
-      margin: 14px auto;
-      border-top: 1px solid var(--kin);
-      border-bottom: 1px solid var(--kin);
-    }
-    .lead {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 15px;
-      letter-spacing: 0.12em;
-      color: var(--sumi-soft);
-    }
+    .rule { width: 120px; height: 5px; margin: 14px auto; border-top: 1px solid var(--kin); border-bottom: 1px solid var(--kin); }
+    .lead { font-family: 'Shippori Mincho', serif; font-size: 15px; letter-spacing: 0.12em; color: var(--sumi-soft); }
 
     .intro {
-      max-width: 448px;
-      margin: 24px auto 0;
-      padding: 14px 18px;
-      font-size: 14px;
-      color: var(--sumi-soft);
+      max-width: 448px; margin: 24px auto 0; padding: 14px 18px;
+      font-size: 14px; color: var(--sumi-soft);
       background: rgba(244,239,228,0.92);  /* Ver1.1 追加：青海波の上での可読性 */
       border-radius: 4px;
     }
     @media (max-width: 480px) { .intro { margin-left: 16px; margin-right: 16px; } }
 
     /* ===== フォーム ===== */
-    .form-wrap {
-      max-width: 480px;
-      margin: 28px auto 0;
-      padding: 0 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-    .card {
-      background: var(--white);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 22px 20px;
-    }
+    .form-wrap { max-width: 480px; margin: 28px auto 0; padding: 0 16px; display: flex; flex-direction: column; gap: 18px; }
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; }
     .label {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
+      display: flex; align-items: baseline; gap: 10px;
       /* Ver1.0: Shippori Mincho 16px → Ver1.1: 楷書風 Klee One 20px */
-      font-family: var(--kaisho);
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      margin-bottom: 14px;
+      font-family: var(--kaisho); font-size: 20px; font-weight: 600;
+      letter-spacing: 0.06em; margin-bottom: 14px;
     }
-    .label .num {
-      color: var(--kin);
-      font-size: 18px;
-      letter-spacing: 0.1em;
+    .label .num { color: var(--kin); font-size: 18px; letter-spacing: 0.1em; }
+    .label .req, .label .opt {
+      margin-left: auto; font-family: 'Noto Sans JP', sans-serif; font-size: 11px;
+      border-radius: 3px; padding: 0 6px; line-height: 1.7;
     }
-    .label .req {
-      margin-left: auto;
-      font-family: 'Noto Sans JP', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--shu);
-      border: 1px solid var(--shu);
-      border-radius: 3px;
-      padding: 0 6px;
-      line-height: 1.7;
-    }
-    .label .opt {
-      margin-left: auto;
-      font-family: 'Noto Sans JP', sans-serif;
-      font-size: 11px;
-      color: var(--sumi-soft);
-      border: 1px solid var(--line);
-      border-radius: 3px;
-      padding: 0 6px;
-      line-height: 1.7;
-    }
+    .label .req { font-weight: 500; color: var(--shu); border: 1px solid var(--shu); }
+    .label .opt { color: var(--sumi-soft); border: 1px solid var(--line); }
 
     .input, .textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: var(--washi);
-      color: var(--sumi);
+      width: 100%; padding: 12px 14px;
+      border: 1px solid var(--line); border-radius: 4px;
+      background: var(--washi); color: var(--sumi);
       font-family: 'Noto Sans JP', sans-serif;
       font-size: 16px; /* iPhoneで拡大されない最小サイズ */
-      outline: none;
-      transition: border-color 0.2s;
+      outline: none; transition: border-color 0.2s;
     }
     .input:focus, .textarea:focus { border-color: var(--kin); }
     .input::placeholder, .textarea::placeholder { color: #B5AC9C; }
     .textarea { min-height: 96px; resize: vertical; line-height: 1.7; }
+    .input.code { font-size: 20px; letter-spacing: 0.2em; text-align: center; text-transform: uppercase; } /* Ver2.0 追加 */
 
-    .hint {
-      font-size: 12px;
-      color: var(--sumi-soft);
-      margin-top: 10px;
-      line-height: 1.7;
-    }
+    .hint { font-size: 12px; color: var(--sumi-soft); margin-top: 10px; line-height: 1.7; }
 
     /* 選択ボタン（場所・時期） */
     .choices { display: grid; gap: 10px; }
     .choices.three { grid-template-columns: repeat(3, 1fr); }
     .choices.two   { grid-template-columns: repeat(2, 1fr); }
     .choice {
-      position: relative;
-      padding: 14px 6px 12px;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: var(--washi);
-      color: var(--sumi);
-      font-family: 'Shippori Mincho', serif;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      text-align: center;
+      position: relative; padding: 14px 6px 12px;
+      border: 1px solid var(--line); border-radius: 4px;
+      background: var(--washi); color: var(--sumi);
+      font-family: 'Shippori Mincho', serif; font-size: 15px; font-weight: 700;
+      cursor: pointer; text-align: center;
       transition: background 0.2s, border-color 0.2s, color 0.2s;
     }
-    .choice small {
-      display: block;
-      font-family: 'Noto Sans JP', sans-serif;
-      font-size: 11px;
-      font-weight: 400;
-      color: var(--sumi-soft);
-      margin-top: 2px;
-    }
-    .choice.selected {
-      background: var(--sumi);
-      border-color: var(--sumi);
-      color: var(--white);
-    }
+    .choice small { display: block; font-family: 'Noto Sans JP', sans-serif; font-size: 11px; font-weight: 400; color: var(--sumi-soft); margin-top: 2px; }
+    .choice.selected { background: var(--sumi); border-color: var(--sumi); color: var(--white); }
     .choice.selected small { color: #D9D0C0; }
-    .choice:disabled {
-      cursor: not-allowed;
-      color: #B5AC9C;
-      background: var(--washi-deep);
-    }
+    .choice:disabled { cursor: not-allowed; color: #B5AC9C; background: var(--washi-deep); }
+
+    /* 受付番号欄（Ver2.0 追加：一週間後のときだけ表示） */
+    .code-box { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+    .code-box.show { display: block; }
+    .code-box .sub { font-family: var(--kaisho); font-size: 16px; margin-bottom: 8px; }
 
     /* 写真 */
     .upload {
-      position: relative;
-      border: 1px dashed var(--kin);
-      border-radius: 4px;
-      padding: 28px 16px;
-      text-align: center;
-      background: var(--washi);
-      cursor: pointer;
+      position: relative; border: 1px dashed var(--kin); border-radius: 4px;
+      padding: 28px 16px; text-align: center; background: var(--washi); cursor: pointer;
     }
-    .upload input[type="file"] {
-      position: absolute; inset: 0;
-      opacity: 0; cursor: pointer;
-      width: 100%; height: 100%;
-    }
-    .upload-mark {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 28px;
-      color: var(--kin);
-      line-height: 1;
-      margin-bottom: 8px;
-    }
+    .upload input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-mark { font-family: 'Shippori Mincho', serif; font-size: 28px; color: var(--kin); line-height: 1; margin-bottom: 8px; }
     .upload-text { font-size: 14px; color: var(--sumi-soft); }
-    .preview {
-      display: none;
-      width: 100%;
-      max-height: 280px;
-      object-fit: cover;
-      margin-top: 12px;
-      border-radius: 4px;
-      border: 1px solid var(--line);
-    }
-    .notes {
-      margin-top: 14px;
-      padding: 12px 14px;
-      background: var(--washi);
-      border-left: 2px solid var(--kin);
-      font-size: 12px;
-      color: var(--sumi-soft);
-    }
+    .preview { display: none; width: 100%; max-height: 280px; object-fit: cover; margin-top: 12px; border-radius: 4px; border: 1px solid var(--line); }
+    .notes { margin-top: 14px; padding: 12px 14px; background: var(--washi); border-left: 2px solid var(--kin); font-size: 12px; color: var(--sumi-soft); }
     .notes p { font-weight: 700; color: var(--sumi); margin-bottom: 4px; }
     .notes ul { padding-left: 1.2em; }
 
     /* 送信ボタン */
     .submit {
-      margin-top: 6px;
-      width: 100%;
-      padding: 18px;
-      border: none;
-      border-radius: 4px;
-      background: var(--shu);
-      color: var(--white);
-      font-family: 'Shippori Mincho', serif;
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.25em;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      margin-top: 6px; width: 100%; padding: 18px; border: none; border-radius: 4px;
+      background: var(--shu); color: var(--white);
+      font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 700; letter-spacing: 0.25em;
+      cursor: pointer; transition: opacity 0.2s;
     }
     .submit:active { opacity: 0.85; }
     .submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* 完了表示 */
-    .done {
-      display: none;
-      max-width: 480px;
-      margin: 32px auto 0;
-      padding: 0 16px;
-    }
+    .done { display: none; max-width: 480px; margin: 32px auto 0; padding: 0 16px; }
     .done .card { text-align: center; padding: 36px 22px; }
-    .done h2 {
-      font-family: 'Shippori Mincho', serif;
-      font-size: 20px;
-      letter-spacing: 0.15em;
-      color: var(--koke);
-      margin-bottom: 14px;
-    }
+    .done h2 { font-family: 'Shippori Mincho', serif; font-size: 20px; letter-spacing: 0.15em; color: var(--koke); margin-bottom: 14px; }
     .done p { font-size: 14px; color: var(--sumi-soft); }
-    .done .again {
-      margin-top: 24px;
-      padding: 12px 24px;
-      border: 1px solid var(--sumi);
-      border-radius: 4px;
-      background: transparent;
-      color: var(--sumi);
-      font-family: 'Shippori Mincho', serif;
-      font-size: 15px;
-      cursor: pointer;
+    /* Ver2.0 追加：受付番号の表示 */
+    .receipt { margin: 22px 0 6px; padding: 18px 12px; border: 1px solid var(--kin); border-radius: 4px; background: var(--washi); }
+    .receipt .cap { font-family: var(--kaisho); font-size: 15px; color: var(--sumi-soft); }
+    .receipt .no { font-family: 'Shippori Mincho', serif; font-size: 30px; font-weight: 700; letter-spacing: 0.15em; color: var(--sumi); margin-top: 4px; }
+    .done .btns { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+    .btn-line {
+      padding: 12px 24px; border: 1px solid var(--sumi); border-radius: 4px;
+      background: transparent; color: var(--sumi);
+      font-family: 'Shippori Mincho', serif; font-size: 15px; cursor: pointer; text-decoration: none;
     }
+    .btn-fill { background: var(--sumi); color: var(--white); }
 
     /* トースト */
     .toast {
-      position: fixed;
-      bottom: 28px; left: 50%;
+      position: fixed; bottom: 28px; left: 50%;
       transform: translateX(-50%) translateY(120px);
       max-width: calc(100% - 32px);
-      background: var(--sumi);
-      color: var(--white);
-      padding: 12px 22px;
-      border-radius: 4px;
-      font-size: 14px;
-      z-index: 200;
+      background: var(--sumi); color: var(--white);
+      padding: 12px 22px; border-radius: 4px; font-size: 14px; z-index: 200;
       transition: transform 0.3s ease;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast.error { background: var(--shu); }
 
-    footer {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      color: #B5AC9C;
-    }
+    footer { text-align: center; margin-top: 40px; font-size: 11px; letter-spacing: 0.2em; color: #8A8172; }
   </style>
 </head>
 <body>
@@ -343,10 +196,11 @@
     <p class="lead">暮らしの場所を整え、明日へ一歩</p>
   </header>
 
+  <!-- Ver2.0：「鑑定書は後日お届け」→「受付番号で結果を見られる」に変更 -->
   <p class="intro">
     お預かりした写真をもとに、日本の暦や昔ながらの住まいの知恵から、
     これからの過ごし方をそっと添えてお返しします。
-    鑑定書は後日お届けします。
+    鑑定ができあがりましたら、受付番号で結果をご覧いただけます。
   </p>
 
   <div class="form-wrap" id="formWrap">
@@ -369,6 +223,12 @@
       <div class="label"><span class="num">三</span>撮影の時期<span class="req">必須</span></div>
       <div class="choices two" id="phaseChoices"></div>
       <p class="hint">※ 一週間後の写真は、初回と同じ位置・同じ向きから撮ってください。</p>
+      <!-- Ver2.0 追加：一週間後のときだけ表示 -->
+      <div class="code-box" id="codeBox">
+        <p class="sub">初回の受付番号</p>
+        <input class="input code" type="text" id="code" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" />
+        <p class="hint">※ 初回のときに表示された8桁の番号です。初回の写真と見比べて鑑定します。</p>
+      </div>
     </div>
 
     <!-- 四　写真 -->
@@ -399,16 +259,21 @@
     <button class="submit" id="submit">鑑定をお願いする</button>
   </div>
 
-  <!-- 完了表示 -->
+  <!-- 完了表示（Ver2.0：受付番号と結果ページへの導線を追加） -->
   <div class="done" id="done">
     <div class="card">
       <h2>お預かりしました</h2>
-      <p>
-        ありがとうございます。<br>
-        鑑定書ができあがりましたら、お届けします。<br>
-        一週間後にも、同じ場所の写真をお願いしますね。
-      </p>
-      <button class="again" id="again">続けてもう一枚送る</button>
+      <p id="doneText"></p>
+      <div class="receipt">
+        <div class="cap">受付番号</div>
+        <div class="no" id="receiptNo"></div>
+      </div>
+      <p style="font-size:12px;">この番号で結果をご覧いただけます。<br>画面を保存するか、番号を控えておいてください。</p>
+      <div class="btns">
+        <button class="btn-line" id="copyBtn">受付番号をコピー</button>
+        <a class="btn-line btn-fill" id="resultLink" href="result.html">結果ページを開く</a>
+        <button class="btn-line" id="again">続けてもう一枚送る</button>
+      </div>
     </div>
   </div>
 
@@ -431,6 +296,12 @@
     //   - 場所・時期の選択肢は CONFIG に集約（追加・受付開始は enabled を変えるだけ）
     // Ver1.1 (2026-10-27) デザイン微修正のみ（処理の変更なし）
     //   - 項目名を楷書風フォントで拡大、背景を青海波に変更（詳細は CSS 冒頭）
+    // Ver1.2 (2026-10-27) 青海波の色変更のみ（処理の変更なし）
+    // Ver2.0 (2026-10-27) 受付番号を追加（設定は supabase_v2.sql）
+    //   - 初回：8桁の受付番号を発行（紛らわしい I O 0 1 は使わない）
+    //   - 一週間後：初回の受付番号を入力。送信前に番号が存在するか確認
+    //   - 写真のファイル名に受付番号を含める（例 entrance/K7M3QX2A_first_20261027_153012.jpg）
+    //   - 完了画面に受付番号・コピー・結果ページ（result.html）へのボタンを表示
     // =========================================================
 
     // ---------- 設定（ここだけ直せば運用を変えられる） ----------
@@ -441,6 +312,8 @@
       TABLE:  'fortune_requests',
       MAX_EDGE_PX:  2000,  // 縮小後の長辺
       JPEG_QUALITY: 0.85,
+      CODE_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',  // Ver2.0 追加：受付番号に使う文字
+      CODE_LENGTH: 8,                                  // Ver2.0 追加
       PLACES: [
         { code: 'entrance', label: '玄関',     enabled: true  },
         { code: 'desk',     label: '机まわり', enabled: false },
@@ -452,10 +325,35 @@
       ],
     };
 
+    const HEADERS = {
+      'apikey': CONFIG.SUPABASE_KEY,
+      'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+    };
+
     // ---------- 状態 ----------
     let selectedPlace = null;
     let selectedPhase = null;
     let selectedFile  = null;
+
+    // ---------- 受付番号（Ver2.0 追加） ----------
+    function newCode() {
+      const chars = CONFIG.CODE_CHARS;
+      const buf = new Uint32Array(CONFIG.CODE_LENGTH);
+      crypto.getRandomValues(buf);
+      return Array.from(buf, n => chars[n % chars.length]).join('');
+    }
+    function normalizeCode(s) { return (s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+    function formatCode(c)    { return `${c.slice(0, 4)}-${c.slice(4)}`; }
+
+    async function codeExists(code) {
+      const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/fortune_code_exists`, {
+        method: 'POST',
+        headers: { ...HEADERS, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_code: code }),
+      });
+      if (!res.ok) throw new Error('受付番号を確認できませんでした');
+      return (await res.json()) === true;
+    }
 
     // ---------- 選択ボタンの生成 ----------
     function buildChoices(containerId, items, onSelect) {
@@ -476,7 +374,17 @@
       });
     }
     buildChoices('placeChoices', CONFIG.PLACES, code => { selectedPlace = code; });
-    buildChoices('phaseChoices', CONFIG.PHASES, code => { selectedPhase = code; });
+    buildChoices('phaseChoices', CONFIG.PHASES, code => {
+      selectedPhase = code;
+      // Ver2.0 追加：一週間後のときだけ受付番号欄を表示
+      document.getElementById('codeBox').classList.toggle('show', code === 'week1');
+    });
+
+    // 受付番号の入力を XXXX-XXXX に整える（Ver2.0 追加）
+    document.getElementById('code').addEventListener('input', e => {
+      const c = normalizeCode(e.target.value).slice(0, CONFIG.CODE_LENGTH);
+      e.target.value = c.length > 4 ? formatCode(c) : c;
+    });
 
     // ---------- 写真プレビュー ----------
     document.getElementById('photo').addEventListener('change', e => {
@@ -532,18 +440,14 @@
     }
 
     // ---------- 写真のアップロード（非公開バケット） ----------
-    async function uploadPhoto() {
+    // Ver1.0: entrance/20261027_153012_first_k3x9.jpg
+    // Ver2.0: entrance/K7M3QX2A_first_20261027_153012.jpg（受付番号で並ぶように）
+    async function uploadPhoto(code) {
       const { blob, ext, type } = await shrinkImage(selectedFile);
-      const rand = Math.random().toString(36).slice(2, 6);
-      // 例）entrance/20261027_153012_first_k3x9.jpg
-      const path = `${selectedPlace}/${stamp()}_${selectedPhase}_${rand}.${ext}`;
+      const path = `${selectedPlace}/${code}_${selectedPhase}_${stamp()}.${ext}`;
       const res = await fetch(`${CONFIG.SUPABASE_URL}/storage/v1/object/${CONFIG.BUCKET}/${path}`, {
         method: 'POST',
-        headers: {
-          'apikey': CONFIG.SUPABASE_KEY,
-          'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
-          'Content-Type': type,
-        },
+        headers: { ...HEADERS, 'Content-Type': type },
         body: blob,
       });
       if (!res.ok) throw new Error('写真の送信に失敗しました');
@@ -554,10 +458,14 @@
     document.getElementById('submit').addEventListener('click', async () => {
       const name = document.getElementById('name').value.trim();
       const memo = document.getElementById('memo').value.trim();
+      const inputCode = normalizeCode(document.getElementById('code').value);
 
       if (!name)          { showToast('お名前を入力してください', 'error'); return; }
       if (!selectedPlace) { showToast('鑑定する場所を選んでください', 'error'); return; }
       if (!selectedPhase) { showToast('撮影の時期を選んでください', 'error'); return; }
+      if (selectedPhase === 'week1' && inputCode.length !== CONFIG.CODE_LENGTH) {
+        showToast('初回の受付番号（8桁）を入力してください', 'error'); return;
+      }
       if (!selectedFile)  { showToast('写真を選んでください', 'error'); return; }
 
       const btn = document.getElementById('submit');
@@ -565,28 +473,35 @@
       btn.textContent = 'お預かりしています…';
 
       try {
-        const photoPath = await uploadPhoto();
+        // Ver2.0 追加：受付番号の決定
+        let code;
+        if (selectedPhase === 'first') {
+          code = newCode();
+        } else {
+          if (!(await codeExists(inputCode))) throw new Error('その受付番号は見つかりませんでした');
+          code = inputCode;
+        }
+
+        const photoPath = await uploadPhoto(code);
         const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${CONFIG.TABLE}`, {
           method: 'POST',
-          headers: {
-            'apikey': CONFIG.SUPABASE_KEY,
-            'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal',
-          },
+          headers: { ...HEADERS, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
           body: JSON.stringify({
             name,
             place: selectedPlace,
             phase: selectedPhase,
             memo: memo || null,
             photo_path: photoPath,
+            code,
           }),
         });
-        if (!res.ok) throw new Error('受付の登録に失敗しました');
+        if (!res.ok) {
+          // 同じ番号で一週間後を2回送った場合など
+          if (res.status === 409) throw new Error('この受付番号の一週間後の写真は、すでにお預かりしています');
+          throw new Error('受付の登録に失敗しました');
+        }
 
-        document.getElementById('formWrap').style.display = 'none';
-        document.getElementById('done').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showDone(code);
       } catch (e) {
         showToast(e.message, 'error');
       } finally {
@@ -595,15 +510,33 @@
       }
     });
 
+    // ---------- 完了画面（Ver2.0 追加） ----------
+    function showDone(code) {
+      document.getElementById('doneText').innerHTML = selectedPhase === 'first'
+        ? 'ありがとうございます。<br>鑑定ができあがりましたら、結果ページでご覧いただけます。<br>一週間後にも、同じ場所の写真をお願いしますね。'
+        : 'ありがとうございます。<br>初回の写真と見比べて鑑定します。<br>できあがりましたら、結果ページでご覧いただけます。';
+      document.getElementById('receiptNo').textContent = formatCode(code);
+      document.getElementById('resultLink').href = `result.html?code=${code}`;
+      document.getElementById('copyBtn').onclick = async () => {
+        try { await navigator.clipboard.writeText(formatCode(code)); showToast('受付番号をコピーしました'); }
+        catch { showToast('コピーできませんでした。番号を控えてください', 'error'); }
+      };
+      document.getElementById('formWrap').style.display = 'none';
+      document.getElementById('done').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     // ---------- 続けてもう一枚（名前は残す） ----------
     document.getElementById('again').addEventListener('click', () => {
       selectedPhase = null;
       selectedFile  = null;
       document.getElementById('memo').value = '';
+      document.getElementById('code').value = '';
       document.getElementById('photo').value = '';
       document.getElementById('preview').style.display = 'none';
       document.getElementById('uploadMark').textContent = '＋';
       document.getElementById('uploadText').textContent = 'タップして写真を選ぶ';
+      document.getElementById('codeBox').classList.remove('show');
       document.querySelectorAll('#phaseChoices .choice').forEach(b => b.classList.remove('selected'));
       document.getElementById('done').style.display = 'none';
       document.getElementById('formWrap').style.display = 'flex';

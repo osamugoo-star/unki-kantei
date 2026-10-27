@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>運気鑑定 結果</title>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Klee+One:wght@600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* =========================================================
+       運気鑑定 結果ページ result.html
+       ---------------------------------------------------------
+       Ver1.0 (2026-10-27) 初期リリース（受付フォーム Ver2.0 と同時）
+         - デザインは受付フォーム Ver1.2 に合わせる（和紙色・青海波・楷書風見出し）
+         - 鑑定書を画面に表示（PC・スマホ共通）
+         - 一週間後の鑑定があれば、初回との比較（写真の並べ表示・運勢の変化）を表示
+         - 「鑑定書をPDFで保存」ボタン：印刷用レイアウトに切り替えて印刷画面を開く
+       ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --washi:      #F4EFE4;
+      --washi-deep: #EAE2D0;
+      --sumi:       #2E2A26;
+      --sumi-soft:  #6A6258;
+      --shu:        #A8432F;
+      --kin:        #A88B57;
+      --koke:       #5F6B4E;
+      --mizu:       #5E9DB8;
+      --line:       #D3C8B2;
+      --white:      #FBF8F2;
+      --kaisho: 'Klee One', 'HG正楷書体-PRO', serif;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--washi);
+      color: var(--sumi);
+      min-height: 100vh;
+      padding-bottom: 64px;
+      line-height: 1.8;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cdefs%3E%3Cg id='w'%3E%3Ccircle r='20' fill='%23F4EFE4'/%3E%3Ccircle r='20' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='15' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='10' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3Ccircle r='5' fill='none' stroke='%235E9DB8' stroke-opacity='0.35' stroke-width='0.7'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23w' x='0' y='0'/%3E%3Cuse href='%23w' x='40' y='0'/%3E%3Cuse href='%23w' x='20' y='10'/%3E%3Cuse href='%23w' x='0' y='20'/%3E%3Cuse href='%23w' x='40' y='20'/%3E%3C/svg%3E");
+      background-size: 72px 36px;
+    }
+
+    header { max-width: 640px; margin: 0 auto; padding: 48px 20px 8px; text-align: center; }
+    .seal {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border: 2px solid var(--shu); color: var(--shu);
+      font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700;
+      border-radius: 4px; margin-bottom: 18px; opacity: 0.85; background: var(--washi);
+    }
+    h1 { font-family: 'Shippori Mincho', serif; font-size: clamp(24px, 6.5vw, 32px); font-weight: 700; letter-spacing: 0.3em; padding-left: 0.3em; }
+    .rule { width: 120px; height: 5px; margin: 14px auto; border-top: 1px solid var(--kin); border-bottom: 1px solid var(--kin); }
+    .lead { font-family: 'Shippori Mincho', serif; font-size: 15px; letter-spacing: 0.12em; color: var(--sumi-soft); }
+
+    main { max-width: 640px; margin: 28px auto 0; padding: 0 16px; display: flex; flex-direction: column; gap: 18px; }
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; }
+    .label { display: flex; align-items: baseline; gap: 10px; font-family: var(--kaisho); font-size: 20px; font-weight: 600; letter-spacing: 0.06em; margin-bottom: 14px; }
+    .label .num { color: var(--kin); font-size: 18px; }
+    .hint { font-size: 12px; color: var(--sumi-soft); margin-top: 10px; }
+    .center { text-align: center; }
+
+    .input {
+      width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 4px;
+      background: var(--washi); color: var(--sumi); outline: none;
+      font-size: 20px; letter-spacing: 0.2em; text-align: center; text-transform: uppercase;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .input:focus { border-color: var(--kin); }
+    .btn {
+      width: 100%; margin-top: 14px; padding: 16px; border: none; border-radius: 4px;
+      background: var(--shu); color: var(--white);
+      font-family: 'Shippori Mincho', serif; font-size: 17px; font-weight: 700; letter-spacing: 0.2em; cursor: pointer;
+    }
+    .btn:disabled { opacity: 0.5; }
+    .btn-line {
+      display: inline-block; padding: 12px 22px; border: 1px solid var(--sumi); border-radius: 4px;
+      background: transparent; color: var(--sumi); font-family: 'Shippori Mincho', serif; font-size: 15px;
+      cursor: pointer; text-decoration: none;
+    }
+
+    /* 鑑定書 */
+    .doc-head { text-align: center; padding: 6px 0 4px; }
+    .doc-head .ttl { font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700; letter-spacing: 0.25em; }
+    .doc-head .who { font-family: var(--kaisho); font-size: 18px; margin-top: 6px; }
+    .meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; font-size: 12px; color: var(--sumi-soft); margin-top: 8px; }
+
+    .photo { width: 100%; max-height: 360px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line); display: block; }
+    .photo-missing { padding: 30px; text-align: center; font-size: 12px; color: var(--sumi-soft); background: var(--washi); border: 1px dashed var(--line); border-radius: 4px; }
+
+    .overall { display: flex; gap: 16px; align-items: center; margin-top: 16px; padding: 16px; background: var(--washi); border-radius: 4px; }
+    .rank {
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+      min-width: 64px; height: 64px; padding: 0 8px;
+      border: 2px solid var(--shu); color: var(--shu); border-radius: 4px;
+      font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700; letter-spacing: 0.05em;
+      background: var(--white);
+    }
+    .rank.sm { min-width: 44px; height: 30px; font-size: 14px; border-width: 1px; }
+    .overall p { font-size: 14px; }
+
+    .item { padding: 16px 0; border-top: 1px solid var(--line); }
+    .item:first-of-type { border-top: none; }
+    .item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .item-head .name { font-family: var(--kaisho); font-size: 19px; font-weight: 600; }
+    .row { display: grid; grid-template-columns: 4.5em 1fr; gap: 8px; font-size: 14px; margin-top: 4px; }
+    .row .k { font-family: var(--kaisho); color: var(--kin); font-weight: 600; }
+    .row.action .v { color: var(--koke); font-weight: 500; }
+
+    /* 比較 */
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .pair figure { margin: 0; }
+    .pair figcaption { text-align: center; font-family: var(--kaisho); font-size: 15px; margin-top: 4px; }
+    .pair .photo { max-height: 220px; }
+    table.cmp { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+    table.cmp th, table.cmp td { border-bottom: 1px solid var(--line); padding: 8px 4px; text-align: center; vertical-align: middle; }
+    table.cmp th { font-family: var(--kaisho); font-weight: 600; color: var(--sumi-soft); font-size: 14px; }
+    table.cmp td.lbl { font-family: var(--kaisho); font-weight: 600; text-align: left; }
+    table.cmp td.note { text-align: left; font-size: 13px; color: var(--sumi-soft); }
+    .arrow { color: var(--mizu); font-weight: 700; }
+    .cmp-text { margin-top: 16px; padding: 14px 16px; background: var(--washi); border-left: 2px solid var(--mizu); font-size: 14px; }
+
+    .wait { text-align: center; }
+    .wait h2 { font-family: 'Shippori Mincho', serif; font-size: 19px; letter-spacing: 0.15em; color: var(--koke); margin-bottom: 10px; }
+    .wait p { font-size: 14px; color: var(--sumi-soft); }
+
+    .actions { text-align: center; }
+    .actions .btn { max-width: 360px; }
+
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(120px);
+      max-width: calc(100% - 32px); background: var(--shu); color: var(--white);
+      padding: 12px 22px; border-radius: 4px; font-size: 14px; z-index: 200; transition: transform 0.3s ease;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    footer { text-align: center; margin-top: 40px; font-size: 11px; letter-spacing: 0.2em; color: #8A8172; }
+
+    @media (max-width: 480px) {
+      .row { grid-template-columns: 1fr; gap: 0; }
+      .row .k { font-size: 13px; }
+    }
+
+    /* ===== 印刷（PDF保存）用 ===== */
+    @page { size: A4; margin: 14mm; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      header { padding-top: 0; }
+      .no-print { display: none !important; }
+      main { max-width: none; padding: 0; margin-top: 10px; }
+      .card { border-color: #bbb; break-inside: avoid; page-break-inside: avoid; }
+      .item { break-inside: avoid; page-break-inside: avoid; }
+      .page-break { break-before: page; page-break-before: always; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .row { grid-template-columns: 4.5em 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="seal">鑑</div>
+    <h1>運気鑑定</h1>
+    <div class="rule"></div>
+    <p class="lead">暮らしの場所を整え、明日へ一歩</p>
+  </header>
+
+  <main id="main">
+    <!-- 受付番号の入力 -->
+    <div class="card no-print" id="codeCard">
+      <div class="label">受付番号</div>
+      <input class="input" type="text" id="code" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" />
+      <button class="btn" id="showBtn">結果を見る</button>
+      <p class="hint">※ 受付のときに表示された8桁の番号を入力してください。</p>
+    </div>
+    <div id="out"></div>
+  </main>
+
+  <footer>KAKERA PROJECT</footer>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // =========================================================
+    // 運気鑑定 結果ページ result.html
+    // ---------------------------------------------------------
+    // Ver1.0 (2026-10-27) 初期リリース
+    //   - URLの ?code=XXXXXXXX または入力した受付番号で結果を表示
+    //   - データ取得は Supabase の関数 fortune_get_result（supabase_v2.sql）
+    //     受付番号を知っている人だけが、その番号の結果だけを取得できる
+    //   - 鑑定前：「ただいま鑑定中」と受付日時を表示
+    //   - 初回の鑑定：写真・総評・各項目（結果／根拠／これから）
+    //   - 一週間後の鑑定：同じ形式＋初回との比較（写真の並べ表示・運勢の変化表・比較コメント）
+    //   - 鑑定の中身は unki_sync.py が登録する JSON（構成は 鑑定結果テンプレート.json）
+    //   - PDF保存はブラウザの印刷機能を使用（PC・スマホ共通）
+    // =========================================================
+
+    const CONFIG = {
+      SUPABASE_URL: 'https://stbmuewuqmckqzeokynq.supabase.co',
+      SUPABASE_KEY: 'sb_publishable_n4NhN1Fgoy-XETdivYstsQ_iUg1JaI6',
+      CODE_LENGTH: 8,
+      PLACES: { entrance: '玄関', desk: '机まわり', living: '居間' },
+      PHASES: { first: '初回', week1: '一週間後' },
+    };
+
+    // ---------- 共通 ----------
+    const $ = id => document.getElementById(id);
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function br(s) { return esc(s).replace(/\n/g, '<br>'); }
+    function normalizeCode(s) { return (s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+    function formatCode(c)    { return `${c.slice(0, 4)}-${c.slice(4)}`; }
+    function jpDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    function showToast(msg) {
+      const t = $('toast'); t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    $('code').addEventListener('input', e => {
+      const c = normalizeCode(e.target.value).slice(0, CONFIG.CODE_LENGTH);
+      e.target.value = c.length > 4 ? formatCode(c) : c;
+    });
+
+    // ---------- 取得 ----------
+    async function load(code) {
+      const btn = $('showBtn');
+      btn.disabled = true; btn.textContent = '読み込んでいます…';
+      try {
+        const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/fortune_get_result`, {
+          method: 'POST',
+          headers: {
+            'apikey': CONFIG.SUPABASE_KEY,
+            'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ p_code: code }),
+        });
+        if (!res.ok) throw new Error('結果を読み込めませんでした');
+        const data = await res.json();
+        if (!data) throw new Error('その受付番号は見つかりませんでした');
+        history.replaceState(null, '', `?code=${code}`);
+        render(code, data);
+      } catch (e) {
+        showToast(e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '結果を見る';
+      }
+    }
+
+    $('showBtn').addEventListener('click', () => {
+      const code = normalizeCode($('code').value);
+      if (code.length !== CONFIG.CODE_LENGTH) { showToast('8桁の受付番号を入力してください'); return; }
+      load(code);
+    });
+
+    // ---------- 表示 ----------
+    function photoHtml(url, alt) {
+      return url
+        ? `<img class="photo" src="${esc(url)}" alt="${esc(alt)}" onerror="this.outerHTML='<div class=&quot;photo-missing&quot;>写真の表示期限が切れています</div>'">`
+        : `<div class="photo-missing">写真はありません</div>`;
+    }
+
+    function resultCard(r, data, num) {
+      const c = r.content || {};
+      const items = (c.items || []).map(it => `
+        <div class="item">
+          <div class="item-head">
+            ${it.rank ? `<span class="rank sm">${esc(it.rank)}</span>` : ''}
+            <span class="name">${esc(it.label)}</span>
+          </div>
+          <div class="row"><span class="k">結果</span><span class="v">${br(it.result)}</span></div>
+          <div class="row"><span class="k">根拠</span><span class="v">${br(it.reason)}</span></div>
+          <div class="row action"><span class="k">これから</span><span class="v">${br(it.action)}</span></div>
+        </div>`).join('');
+
+      return `
+        <div class="card ${num > 1 ? 'page-break' : ''}">
+          <div class="label"><span class="num">${num === 1 ? '一' : '二'}</span>${CONFIG.PHASES[r.phase] || ''}の鑑定</div>
+          ${photoHtml(r.photo_url, `${CONFIG.PHASES[r.phase]}の写真`)}
+          <div class="meta"><span>鑑定日時：${jpDate(r.appraised_at)}</span></div>
+          ${c.overall ? `
+            <div class="overall">
+              ${c.overall.rank ? `<span class="rank">${esc(c.overall.rank)}</span>` : ''}
+              <div><div class="label" style="margin-bottom:4px;font-size:18px;">総評</div><p>${br(c.overall.text)}</p></div>
+            </div>` : ''}
+          <div style="margin-top:10px;">${items}</div>
+        </div>`;
+    }
+
+    function compareCard(first, week1) {
+      const a = first.content || {}, b = week1.content || {};
+      const cmp = b.comparison || {};
+      const notes = cmp.notes || {};
+      const rankOf = (content, label) => {
+        if (label === '総評') return content.overall?.rank || '';
+        return (content.items || []).find(i => i.label === label)?.rank || '';
+      };
+      const labels = ['総評', ...(b.items || []).map(i => i.label)];
+      const rows = labels
+        .filter(l => rankOf(a, l) || rankOf(b, l) || notes[l])
+        .map(l => `
+          <tr>
+            <td class="lbl">${esc(l)}</td>
+            <td>${rankOf(a, l) ? `<span class="rank sm">${esc(rankOf(a, l))}</span>` : '－'}</td>
+            <td class="arrow">→</td>
+            <td>${rankOf(b, l) ? `<span class="rank sm">${esc(rankOf(b, l))}</span>` : '－'}</td>
+            <td class="note">${br(notes[l])}</td>
+          </tr>`).join('');
+
+      return `
+        <div class="card page-break">
+          <div class="label"><span class="num">三</span>初回と一週間後の比較</div>
+          <div class="pair">
+            <figure>${photoHtml(first.photo_url, '初回の写真')}<figcaption>初回</figcaption></figure>
+            <figure>${photoHtml(week1.photo_url, '一週間後の写真')}<figcaption>一週間後</figcaption></figure>
+          </div>
+          <table class="cmp">
+            <thead><tr><th style="text-align:left;">項目</th><th>初回</th><th></th><th>一週間後</th><th style="text-align:left;">ひとこと</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          ${cmp.text ? `<div class="cmp-text">${br(cmp.text)}</div>` : ''}
+        </div>`;
+    }
+
+    function render(code, data) {
+      $('codeCard').style.display = 'none';
+      const first = data.results.find(r => r.phase === 'first');
+      const week1 = data.results.find(r => r.phase === 'week1');
+      const received = data.requests.map(q => `${CONFIG.PHASES[q.phase]}：${jpDate(q.created_at)}`).join('　');
+
+      let html = `
+        <div class="card">
+          <div class="doc-head">
+            <div class="ttl">運気鑑定書</div>
+            <div class="who">${esc(data.name)} さま</div>
+            <div class="meta">
+              <span>受付番号：${formatCode(code)}</span>
+              <span>鑑定場所：${esc(CONFIG.PLACES[data.place] || data.place)}</span>
+            </div>
+            <div class="meta"><span>受付　${received}</span></div>
+          </div>
+        </div>`;
+
+      if (!first) {
+        html += `
+          <div class="card wait">
+            <h2>ただいま鑑定中です</h2>
+            <p>写真はお預かりしています。<br>できあがりましたら、このページでご覧いただけます。</p>
+          </div>`;
+      } else {
+        html += resultCard(first, data, 1);
+        const week1Received = data.requests.some(q => q.phase === 'week1');
+        if (week1) {
+          html += resultCard(week1, data, 2);
+          html += compareCard(first, week1);
+        } else if (week1Received) {
+          html += `<div class="card wait no-print"><h2>一週間後の鑑定中です</h2><p>初回と見比べた結果は、もうしばらくお待ちください。</p></div>`;
+        } else {
+          html += `<div class="card wait no-print"><p>一週間後に同じ場所・同じ向きから撮った写真を送っていただくと、<br>初回と見比べた鑑定をお届けします。</p><p style="margin-top:14px;"><a class="btn-line" href="index.html">写真を送る</a></p></div>`;
+        }
+        html += `
+          <div class="actions no-print">
+            <button class="btn" onclick="window.print()">鑑定書をPDFで保存</button>
+            <p class="hint">印刷画面で「PDFに保存」を選んでください。<br>スマホは 共有 → プリント（または印刷）から保存できます。</p>
+          </div>`;
+      }
+
+      html += `<p class="center no-print" style="margin-top:6px;"><a class="btn-line" href="result.html">別の受付番号で見る</a></p>`;
+      $('out').innerHTML = html;
+      window.scrollTo({ top: 0 });
+    }
+
+    // ---------- URLに番号があれば自動で表示 ----------
+    const qCode = normalizeCode(new URLSearchParams(location.search).get('code'));
+    if (qCode.length === CONFIG.CODE_LENGTH) {
+      $('code').value = formatCode(qCode);
+      load(qCode);
+    }
+  </script>
+</body>
+</html>
