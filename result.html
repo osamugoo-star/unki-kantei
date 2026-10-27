@@ -20,6 +20,10 @@
          - 青海波の線を濃く：水浅葱 #5E9DB8（濃さ0.35）→ 深めの青 #3E7FA6（濃さ0.5）
        Ver1.2 (2026-10-28) ヘッダーに和紙色の下地を追加（受付フォーム Ver2.2 と揃える）
        Ver1.3 (2026-10-28) 画面下の「別の受付番号で見る」「受付へ戻る」ボタンに和紙色の下地を追加
+       Ver1.4 (2026-10-28) 受付フォーム Ver2.4 と揃える
+         - ヘッダーの下地を rgba(244,239,228,0.92) → カードと同じ var(--white)＋罫線に
+         - 鑑の印の下地も var(--white) に
+         - フッター「KAKERA PROJECT」に和紙色の札を敷く
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -50,16 +54,17 @@
     }
 
     /* Ver1.1まで: padding 48px 20px 8px・下地なし → Ver1.2: 和紙色の下地を敷く */
+    /* Ver1.4: 下地をカードと同じ色・罫線に */
     header {
       max-width: 608px; margin: 36px auto 0; padding: 26px 18px 20px; text-align: center;
-      background: rgba(244,239,228,0.92); border-radius: 4px;
+      background: var(--white); border: 1px solid var(--line); border-radius: 6px;
     }
     @media (max-width: 640px) { header { margin-left: 16px; margin-right: 16px; } }
     .seal {
       display: inline-flex; align-items: center; justify-content: center;
       width: 44px; height: 44px; border: 2px solid var(--shu); color: var(--shu);
       font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700;
-      border-radius: 4px; margin-bottom: 18px; opacity: 0.85; background: var(--washi);
+      border-radius: 4px; margin-bottom: 18px; opacity: 0.85; background: var(--white); /* Ver1.4: washi → white */
     }
     h1 { font-family: 'Shippori Mincho', serif; font-size: clamp(24px, 6.5vw, 32px); font-weight: 700; letter-spacing: 0.3em; padding-left: 0.3em; }
     .rule { width: 120px; height: 5px; margin: 14px auto; border-top: 1px solid var(--kin); border-bottom: 1px solid var(--kin); }
@@ -153,6 +158,11 @@
     .toast.show { transform: translateX(-50%) translateY(0); }
 
     footer { text-align: center; margin-top: 40px; font-size: 11px; letter-spacing: 0.2em; color: #8A8172; }
+    /* Ver1.4 追加：和紙色の札 */
+    footer span {
+      display: inline-block; padding: 4px 16px 4px 19px;
+      background: var(--white); border: 1px solid var(--line); border-radius: 4px;
+    }
 
     @media (max-width: 480px) {
       .row { grid-template-columns: 1fr; gap: 0; }
@@ -198,7 +208,7 @@
     </div>
   </main>
 
-  <footer>KAKERA PROJECT</footer>
+  <footer class="no-print"><span>KAKERA PROJECT</span></footer>
   <div class="toast" id="toast"></div>
 
   <script>

@@ -27,6 +27,10 @@
          - ヘッダー（運気鑑定・キャッチコピー）に導入文と同じ和紙色の下地を追加（青海波と重なって読みにくいため）
          - 「鑑定結果を見る」カードのスタイルを追加
        Ver2.3 (2026-10-28) ヘッダーと導入文の和紙の下地をつなげて1エリアに（間のすき間をなくし、角丸を上下に振り分け）
+       Ver2.4 (2026-10-28)
+         - ヘッダー＋導入文の下地を、半透明の和紙色 rgba(244,239,228,0.92) → カードと同じ var(--white) に統一（罫線もカードと同じ）
+         - 鑑の印の下地も var(--white) に
+         - フッター「KAKERA PROJECT」に和紙色の札を敷く（青海波と重なって読めないため）
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -60,10 +64,12 @@
 
     /* ===== ヘッダー ===== */
     /* Ver2.1まで: padding 48px 20px 8px・下地なし → Ver2.2: 和紙色の下地を敷く
-       Ver2.3: 導入文とつなげるため、角丸は上だけ・下の余白を少し詰める */
+       Ver2.3: 導入文とつなげるため、角丸は上だけ・下の余白を少し詰める
+       Ver2.4: 下地をカードと同じ色・罫線に（下の罫線は導入文側で引く） */
     header {
       max-width: 448px; margin: 36px auto 0; padding: 26px 18px 12px; text-align: center;
-      background: rgba(244,239,228,0.92); border-radius: 4px 4px 0 0;
+      background: var(--white); border: 1px solid var(--line); border-bottom: none;
+      border-radius: 6px 6px 0 0;
     }
     @media (max-width: 480px) { header { margin-left: 16px; margin-right: 16px; } }
     .seal {
@@ -72,7 +78,7 @@
       border: 2px solid var(--shu); color: var(--shu);
       font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700;
       border-radius: 4px; margin-bottom: 18px; opacity: 0.85;
-      background: var(--washi);
+      background: var(--white);  /* Ver2.4: var(--washi) → var(--white) */
     }
     h1 {
       font-family: 'Shippori Mincho', serif;
@@ -86,8 +92,9 @@
     .intro {
       max-width: 448px; margin: 0 auto; padding: 10px 18px 18px;
       font-size: 14px; color: var(--sumi-soft);
-      background: rgba(244,239,228,0.92);  /* Ver1.1 追加：青海波の上での可読性 */
-      border-radius: 0 0 4px 4px;
+      /* Ver1.1: rgba(244,239,228,0.92) → Ver2.4: カードと同じ色・罫線 */
+      background: var(--white); border: 1px solid var(--line); border-top: none;
+      border-radius: 0 0 6px 6px;
     }
     @media (max-width: 480px) { .intro { margin-left: 16px; margin-right: 16px; } }
 
@@ -210,6 +217,11 @@
     .toast.error { background: var(--shu); }
 
     footer { text-align: center; margin-top: 40px; font-size: 11px; letter-spacing: 0.2em; color: #8A8172; }
+    /* Ver2.4 追加：和紙色の札 */
+    footer span {
+      display: inline-block; padding: 4px 16px 4px 19px;
+      background: var(--white); border: 1px solid var(--line); border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -310,7 +322,7 @@
     </div>
   </div>
 
-  <footer>KAKERA PROJECT</footer>
+  <footer><span>KAKERA PROJECT</span></footer>
 
   <div class="toast" id="toast"></div>
 
