@@ -32,6 +32,7 @@
          - 鑑の印の下地も var(--white) に
          - フッター「KAKERA PROJECT」に和紙色の札を敷く（青海波と重なって読めないため）
        Ver2.5 (2026-10-29) 鑑定する場所を 3列 → 2列×2段（4つの選択肢に対応）
+       Ver2.6 (2026-10-29) 受付番号の下に、初回の場所を知らせる一文（.code-note）のスタイルを追加
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -152,6 +153,10 @@
     .code-box { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
     .code-box.show { display: block; }
     .code-box .sub { font-family: var(--kaisho); font-size: 16px; margin-bottom: 8px; }
+    /* Ver2.6 追加：初回の場所のお知らせ */
+    .code-note { font-size: 13px; font-weight: 500; color: var(--koke); margin-top: 8px; }
+    .code-note:empty { display: none; }
+    .code-note.err { color: var(--shu); }
 
     /* 写真 */
     .upload {
@@ -254,7 +259,7 @@
       <div class="label"><span class="num">二</span>鑑定する場所<span class="req">必須</span></div>
       <!-- Ver2.4まで: choices three・玄関のみ → Ver2.5: choices two（2×2）・3か所受付 -->
       <div class="choices two" id="placeChoices"></div>
-      <p class="hint">※ ただいまは「玄関」「デスクまわり」「リビング」の3か所を承っています。<br>※ 一週間後の写真は、初回と同じ場所を選んでください。</p>
+      <p class="hint">※ ただいまは「玄関」「デスクまわり」「リビング」の3か所を承っています。<br>※ 一週間後は、初回の受付番号を入れると、初回と同じ場所が自動で選ばれます。</p>
     </div>
 
     <!-- 三　撮影の時期（CONFIG.PHASES から生成） -->
@@ -266,6 +271,7 @@
       <div class="code-box" id="codeBox">
         <p class="sub">初回の受付番号</p>
         <input class="input code" type="text" id="code" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" />
+        <p class="code-note" id="codeNote"></p><!-- Ver2.6 追加 -->
         <p class="hint">※ 初回のときに表示された8桁の番号です。初回の写真と見比べて鑑定します。</p>
       </div>
     </div>
@@ -359,6 +365,11 @@
     // Ver2.5 (2026-10-29) 鑑定する場所を拡大
     //   - 玄関・デスクまわり・リビングの3か所を受付、その他は準備中（グレー表示）
     //   - 内部コード（entrance / desk / living）は変えていないので、Supabase の設定変更は不要
+    // Ver2.6 (2026-10-29) 一週間後は、受付番号から初回の場所を自動で選ぶ
+    //   - 一週間後を選んで受付番号（8桁）を入れると、fortune_get_result で初回の場所を調べて自動で選択
+    //   - その間、ほかの場所は押せないように固定（初回を選び直すと元に戻る）
+    //   - お名前が空なら、初回のお名前も入れる
+    //   - 送信時にも、初回と場所が一致しているか確認
     // =========================================================
 
     // ---------- 設定（ここだけ直せば運用を変えられる） ----------
@@ -427,6 +438,7 @@
         const sub = item.enabled === false ? '準備中' : (item.sub || '');
         btn.innerHTML = `${item.label}${sub ? `<small>${sub}</small>` : ''}`;
         if (item.enabled === false) btn.disabled = true;
+        btn.dataset.enabled = item.enabled === false ? '0' : '1';  // Ver2.6 追加：固定を解くときの元の状態
         btn.addEventListener('click', () => {
           box.querySelectorAll('.choice').forEach(b => b.classList.toggle('selected', b === btn));
           onSelect(item.code);
@@ -439,13 +451,73 @@
       selectedPhase = code;
       // Ver2.0 追加：一週間後のときだけ受付番号欄を表示
       document.getElementById('codeBox').classList.toggle('show', code === 'week1');
+      // Ver2.6 追加：一週間後なら初回の場所を調べる、初回なら固定を解く
+      if (code === 'week1') lookupFirstPlace();
+      else { lockPlaces(null); setCodeNote(''); }
     });
 
     // 受付番号の入力を XXXX-XXXX に整える（Ver2.0 追加）
     document.getElementById('code').addEventListener('input', e => {
       const c = normalizeCode(e.target.value).slice(0, CONFIG.CODE_LENGTH);
       e.target.value = c.length > 4 ? formatCode(c) : c;
+      if (selectedPhase === 'week1') lookupFirstPlace();  // Ver2.6 追加
     });
+
+    // ---------- 初回の場所を自動で選ぶ（Ver2.6 追加） ----------
+    let lockedPlace = null;   // 初回から決まった場所（固定中）
+    let lookupSeq = 0;        // 入力中の古い問い合わせ結果を捨てるための番号
+
+    function setCodeNote(text, isErr = false) {
+      const n = document.getElementById('codeNote');
+      n.textContent = text;
+      n.classList.toggle('err', isErr);
+    }
+
+    function selectPlace(code) {
+      selectedPlace = code;
+      document.querySelectorAll('#placeChoices .choice')
+        .forEach(b => b.classList.toggle('selected', b.dataset.code === code));
+    }
+
+    // code を渡すとその場所だけ押せる状態に。null で元に戻す
+    function lockPlaces(code) {
+      lockedPlace = code;
+      document.querySelectorAll('#placeChoices .choice').forEach(b => {
+        b.disabled = code ? b.dataset.code !== code : b.dataset.enabled === '0';
+      });
+    }
+
+    async function lookupFirstPlace() {
+      const code = normalizeCode(document.getElementById('code').value);
+      const seq = ++lookupSeq;
+      if (code.length !== CONFIG.CODE_LENGTH) { lockPlaces(null); setCodeNote(''); return; }
+      setCodeNote('初回の受付を確認しています…');
+      try {
+        const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/fortune_get_result`, {
+          method: 'POST',
+          headers: { ...HEADERS, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_code: code }),
+        });
+        if (seq !== lookupSeq) return;  // その間に入力が変わった
+        const data = res.ok ? await res.json() : null;
+        if (seq !== lookupSeq) return;
+        if (!data || !data.place) {
+          lockPlaces(null);
+          setCodeNote('その受付番号は見つかりませんでした', true);
+          return;
+        }
+        const label = CONFIG.PLACES.find(p => p.code === data.place)?.label || data.place;
+        selectPlace(data.place);
+        lockPlaces(data.place);
+        const nameInput = document.getElementById('name');
+        if (!nameInput.value.trim() && data.name) nameInput.value = data.name;
+        setCodeNote(`初回の場所「${label}」を選びました`);
+      } catch {
+        if (seq !== lookupSeq) return;
+        lockPlaces(null);
+        setCodeNote('受付番号を確認できませんでした。通信状態を確かめてください', true);
+      }
+    }
 
     // ---------- 写真プレビュー ----------
     document.getElementById('photo').addEventListener('change', e => {
@@ -526,6 +598,10 @@
       if (!selectedPhase) { showToast('撮影の時期を選んでください', 'error'); return; }
       if (selectedPhase === 'week1' && inputCode.length !== CONFIG.CODE_LENGTH) {
         showToast('初回の受付番号（8桁）を入力してください', 'error'); return;
+      }
+      // Ver2.6 追加：一週間後は初回と同じ場所であること
+      if (selectedPhase === 'week1' && lockedPlace !== selectedPlace) {
+        showToast('初回の場所を確認できません。受付番号を確かめてください', 'error'); return;
       }
       if (!selectedFile)  { showToast('写真を選んでください', 'error'); return; }
 
@@ -632,6 +708,8 @@
       document.getElementById('uploadMark').textContent = '＋';
       document.getElementById('uploadText').textContent = 'タップして写真を選ぶ';
       document.getElementById('codeBox').classList.remove('show');
+      lockPlaces(null);   // Ver2.6 追加
+      setCodeNote('');
       document.querySelectorAll('#phaseChoices .choice').forEach(b => b.classList.remove('selected'));
       document.getElementById('done').style.display = 'none';
       document.getElementById('formWrap').style.display = 'flex';
