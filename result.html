@@ -24,6 +24,7 @@
          - ヘッダーの下地を rgba(244,239,228,0.92) → カードと同じ var(--white)＋罫線に
          - 鑑の印の下地も var(--white) に
          - フッター「KAKERA PROJECT」に和紙色の札を敷く
+       Ver1.5 (2026-10-29) 場所の表示名を受付フォーム Ver2.5 と揃える（処理は JS の CONFIG.PLACES のみ）
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -236,7 +237,8 @@
       SUPABASE_URL: 'https://stbmuewuqmckqzeokynq.supabase.co',
       SUPABASE_KEY: 'sb_publishable_n4NhN1Fgoy-XETdivYstsQ_iUg1JaI6',
       CODE_LENGTH: 8,
-      PLACES: { entrance: '玄関', desk: '机まわり', living: '居間' },
+      // Ver1.4まで: 机まわり・居間 → Ver1.5: デスクまわり・リビング、その他を追加
+      PLACES: { entrance: '玄関', desk: 'デスクまわり', living: 'リビング', other: 'その他' },
       PHASES: { first: '初回', week1: '一週間後' },
     };
 

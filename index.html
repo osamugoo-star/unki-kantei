@@ -31,6 +31,7 @@
          - ヘッダー＋導入文の下地を、半透明の和紙色 rgba(244,239,228,0.92) → カードと同じ var(--white) に統一（罫線もカードと同じ）
          - 鑑の印の下地も var(--white) に
          - フッター「KAKERA PROJECT」に和紙色の札を敷く（青海波と重なって読めないため）
+       Ver2.5 (2026-10-29) 鑑定する場所を 3列 → 2列×2段（4つの選択肢に対応）
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -251,8 +252,9 @@
     <!-- 二　鑑定する場所（CONFIG.PLACES から生成） -->
     <div class="card">
       <div class="label"><span class="num">二</span>鑑定する場所<span class="req">必須</span></div>
-      <div class="choices three" id="placeChoices"></div>
-      <p class="hint">※ ただいまは玄関のみ承っています。</p>
+      <!-- Ver2.4まで: choices three・玄関のみ → Ver2.5: choices two（2×2）・3か所受付 -->
+      <div class="choices two" id="placeChoices"></div>
+      <p class="hint">※ ただいまは「玄関」「デスクまわり」「リビング」の3か所を承っています。<br>※ 一週間後の写真は、初回と同じ場所を選んでください。</p>
     </div>
 
     <!-- 三　撮影の時期（CONFIG.PHASES から生成） -->
@@ -280,7 +282,7 @@
       <div class="notes">
         <p>撮影のお願い</p>
         <ul>
-          <li>人の顔や、書類・パソコン画面が写らないようにしてください</li>
+          <li>人の顔や、書類・パソコン画面が写らないようにしてください（デスクまわりは特にご注意ください）</li>
           <li>明るい時間帯に、場所の全体が入るように撮ってください</li>
           <li>撮った位置を覚えておくと、一週間後の比較がしやすくなります</li>
         </ul>
@@ -353,6 +355,10 @@
     //     他の人の番号は表示しない（家族の写真を守るため、全件の一覧は作らない）
     //   - 記憶のキーは unki_kantei_codes（結果ページ Ver1.2 と共通。最大20件）
     //   - 保存できない環境（プライベートモード等）では一覧が出ないだけで、他の動作には影響しない
+    // Ver2.3、Ver2.4 (2026-10-28) デザインのみ（処理の変更なし）
+    // Ver2.5 (2026-10-29) 鑑定する場所を拡大
+    //   - 玄関・デスクまわり・リビングの3か所を受付、その他は準備中（グレー表示）
+    //   - 内部コード（entrance / desk / living）は変えていないので、Supabase の設定変更は不要
     // =========================================================
 
     // ---------- 設定（ここだけ直せば運用を変えられる） ----------
@@ -366,9 +372,13 @@
       CODE_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',  // Ver2.0 追加：受付番号に使う文字
       CODE_LENGTH: 8,                                  // Ver2.0 追加
       PLACES: [
-        { code: 'entrance', label: '玄関',     enabled: true  },
-        { code: 'desk',     label: '机まわり', enabled: false },
-        { code: 'living',   label: '居間',     enabled: false },
+        // Ver2.4まで: 玄関のみ受付（机まわり・居間は準備中）
+        // Ver2.5: 名称を「デスクまわり」「リビング」に変更して受付開始。「その他」を準備中で追加
+        //         ※ other を受付開始するときは、Supabase の place の制約に 'other' を追加すること
+        { code: 'entrance', label: '玄関',         enabled: true  },
+        { code: 'desk',     label: 'デスクまわり', enabled: true  },
+        { code: 'living',   label: 'リビング',     enabled: true  },
+        { code: 'other',    label: 'その他',       enabled: false },
       ],
       PHASES: [
         { code: 'first', label: '初回',     sub: 'はじめての写真' },
