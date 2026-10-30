@@ -25,6 +25,15 @@
          - 鑑の印の下地も var(--white) に
          - フッター「KAKERA PROJECT」に和紙色の札を敷く
        Ver1.5 (2026-10-29) 場所の表示名を受付フォーム Ver2.5 と揃える（処理は JS の CONFIG.PLACES のみ）
+       Ver1.6 (2026-10-31) 印刷（PDF保存）に青海波の額縁を追加
+         - 用紙の周りに青海波、内側に紺の二重線と和紙色の台紙（QRアクリル板「A案 青海波の額」と同じ配色）
+         - 額縁は印刷のときだけ表示し、2ページ目以降にも同じ額縁が付く（.print-frame を position:fixed で各ページに出す）
+         - 余白を額縁の内側に取るため @page の余白 14mm → 0 にし、
+           ページごとの上下の余白は table（.print-wrap）の thead/tfoot を各ページに繰り返して確保
+         - 画面表示は変更なし（.print-wrap は画面では普通のブロックとして並ぶ）
+         - 額縁は画像ファイルを使わず CSS（SVG）で描く：GitHub に画像を追加しなくてよい・色を変えやすい
+         - 印刷で、画面下の通知（toast）が写り込まないように非表示
+         - 鑑定のカードはページをまたげるように変更（1ページ目がほぼ空白になるのを解消）。項目・写真・総評は途中で切らない
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -165,15 +174,55 @@
       background: var(--white); border: 1px solid var(--line); border-radius: 4px;
     }
 
+    /* Ver1.6 追加：印刷用の額縁・包み table は、画面では目立たないようにする */
+    .print-frame { display: none; }
+    .print-wrap, .print-wrap > thead, .print-wrap > tbody, .print-wrap > tfoot,
+    .print-wrap > * > tr, .print-wrap > * > tr > td { display: block; }
+    .print-wrap > thead, .print-wrap > tfoot { display: none; }
+
     @media (max-width: 480px) {
       .row { grid-template-columns: 1fr; gap: 0; }
       .row .k { font-size: 13px; }
     }
 
     /* ===== 印刷（PDF保存）用 ===== */
-    @page { size: A4; margin: 14mm; }
+    /* Ver1.5まで: margin 14mm → Ver1.6: 0（余白は額縁の内側で取る） */
+    @page { size: A4; margin: 0; }
     @media print {
-      body { background: #fff; padding: 0; }
+      /* Ver1.5まで: background #fff → Ver1.6: 背景なし（額縁を見せる） */
+      body { background: none; padding: 0; }
+
+      /* Ver1.6 追加：青海波の額縁（各ページに表示） */
+      .print-frame {
+        display: block; position: fixed; inset: 0; z-index: 0;
+        background-color: #EDF6FA;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cdefs%3E%3Cg id='w'%3E%3Ccircle r='20' fill='%23BBDCE8'/%3E%3Ccircle r='19.2' fill='none' stroke='%23F4FAFC' stroke-width='1.6'/%3E%3Ccircle r='14.4' fill='none' stroke='%23F4FAFC' stroke-width='1.6'/%3E%3Ccircle r='9.6' fill='none' stroke='%23F4FAFC' stroke-width='1.6'/%3E%3Ccircle r='4.8' fill='none' stroke='%23F4FAFC' stroke-width='1.6'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23w' x='0' y='0'/%3E%3Cuse href='%23w' x='40' y='0'/%3E%3Cuse href='%23w' x='20' y='10'/%3E%3Cuse href='%23w' x='0' y='20'/%3E%3Cuse href='%23w' x='40' y='20'/%3E%3C/svg%3E");
+        background-size: 12mm 6mm;
+      }
+      /* 内側の台紙：紺の二重線＋和紙色 */
+      .print-frame::before {
+        content: ""; position: absolute; inset: 10mm;
+        background: #FBF8F1; border: 1.2mm double #1F3A5F;
+        box-shadow: 0 0 0 0.8mm #F4FAFC;
+      }
+      /* 本文の包み：thead/tfoot がページごとに繰り返され、上下の余白になる */
+      .print-wrap { display: table; position: relative; z-index: 1; width: 100%; border-collapse: collapse; }
+      .print-wrap > thead { display: table-header-group; }
+      .print-wrap > tbody { display: table-row-group; }
+      .print-wrap > tfoot { display: table-footer-group; }
+      .print-wrap > * > tr { display: table-row; }
+      .print-wrap > * > tr > td { display: table-cell; padding: 0; }
+      .print-wrap .print-sp { height: 19mm; }
+      .print-wrap .print-body { padding: 0 19mm; }
+      header { margin-top: 0; }
+      /* Ver1.6 追加：画面下の通知（toast）が各ページの上に写り込むため、印刷では消す */
+      .toast { display: none !important; }
+      /* Ver1.6 追加：鑑定のカード（項目入り）はページをまたいでよい
+         （Ver1.5まではカードごと次のページへ送られ、1ページ目がほぼ空白になっていた）。
+         項目・写真・総評は途中で切れないようにする */
+      .card:has(.item) { break-inside: auto; page-break-inside: auto; }
+      .photo, .overall, .pair { break-inside: avoid; page-break-inside: avoid; }
+
       header { padding-top: 0; }
       .no-print { display: none !important; }
       main { max-width: none; padding: 0; margin-top: 10px; }
@@ -186,6 +235,13 @@
   </style>
 </head>
 <body>
+
+  <!-- Ver1.6 追加：印刷用の青海波の額縁（画面では非表示） -->
+  <div class="print-frame" aria-hidden="true"></div>
+  <!-- Ver1.6 追加：印刷時、各ページの上下に余白を繰り返すための包み（画面では普通のブロック） -->
+  <table class="print-wrap" role="presentation">
+  <thead><tr><td><div class="print-sp"></div></td></tr></thead>
+  <tbody><tr><td class="print-body">
 
   <header>
     <div class="seal">鑑</div>
@@ -210,6 +266,10 @@
   </main>
 
   <footer class="no-print"><span>KAKERA PROJECT</span></footer>
+
+  </td></tr></tbody>
+  <tfoot><tr><td><div class="print-sp"></div></td></tr></tfoot>
+  </table>
   <div class="toast" id="toast"></div>
 
   <script>
@@ -231,6 +291,8 @@
     //   - 結果を表示できた受付番号を、この端末のブラウザ（localStorage）に記憶
     //     LINEで届いたURLから開いた場合も、次からは受付フォームの「鑑定結果を見る」に表示される
     //   - 記憶のキーは unki_kantei_codes（受付フォーム Ver2.2 と共通。最大20件）
+    // Ver1.6 (2026-10-31)
+    //   - JS の変更なし（印刷の額縁は HTML と CSS のみで追加）
     // =========================================================
 
     const CONFIG = {
