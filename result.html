@@ -34,6 +34,12 @@
          - 額縁は画像ファイルを使わず CSS（SVG）で描く：GitHub に画像を追加しなくてよい・色を変えやすい
          - 印刷で、画面下の通知（toast）が写り込まないように非表示
          - 鑑定のカードはページをまたげるように変更（1ページ目がほぼ空白になるのを解消）。項目・写真・総評は途中で切らない
+       Ver1.7 (2026-11-03) 写真への書き込み（赤丸・矢印・ひと言メモ）を表示（unki_sync.py Ver1.3 と同時）
+         - 鑑定に書き込み写真（content.marked_photo_url）があれば、元の写真の代わりに表示
+         - 書き込み写真は切り抜かずに全体を表示（.photo.marked。元の写真は上下を切って高さをそろえていた）
+         - 写真の下に「書き込みの説明」（番号・ひと言・関係する項目・補足）を表示。印刷（PDF）にも入る
+         - 画面では「元の写真を見る」で書き込み前の写真も開ける（印刷には出さない）
+         - 初回と一週間後の比較（並べた写真）は、同じ向きで見比べるため元の写真のまま
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -119,6 +125,20 @@
     .meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; font-size: 12px; color: var(--sumi-soft); margin-top: 8px; }
 
     .photo { width: 100%; max-height: 360px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line); display: block; }
+    /* Ver1.7 追加：書き込み写真は書き込みが切れないよう全体を表示 */
+    .photo.marked { max-height: none; object-fit: contain; background: var(--washi); }
+    .marks { list-style: none; margin-top: 10px; padding: 12px 14px; background: var(--washi); border-radius: 4px; font-size: 14px; }
+    .marks-ttl { font-family: var(--kaisho); font-weight: 600; color: var(--kin); margin-bottom: 4px; }
+    .marks li { display: grid; grid-template-columns: 1.7em 1fr; gap: 6px; align-items: start; padding: 3px 0; }
+    .marks .no {
+      display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; margin-top: 0.15em;
+      border-radius: 50%; background: #C8452C; color: #fff; font-size: 12px; font-weight: 700;
+    }
+    .marks .tag { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid var(--line); border-radius: 3px; font-size: 11px; color: var(--sumi-soft); background: var(--white); }
+    .marks .sub { display: block; font-size: 13px; color: var(--sumi-soft); }
+    details.orig { margin-top: 8px; font-size: 13px; color: var(--sumi-soft); }
+    details.orig summary { cursor: pointer; }
+    details.orig .photo { margin-top: 6px; }
     .photo-missing { padding: 30px; text-align: center; font-size: 12px; color: var(--sumi-soft); background: var(--washi); border: 1px dashed var(--line); border-radius: 4px; }
 
     .overall { display: flex; gap: 16px; align-items: center; margin-top: 16px; padding: 16px; background: var(--washi); border-radius: 4px; }
@@ -221,7 +241,7 @@
          （Ver1.5まではカードごと次のページへ送られ、1ページ目がほぼ空白になっていた）。
          項目・写真・総評は途中で切れないようにする */
       .card:has(.item) { break-inside: auto; page-break-inside: auto; }
-      .photo, .overall, .pair { break-inside: avoid; page-break-inside: avoid; }
+      .photo, .overall, .pair, .marks { break-inside: avoid; page-break-inside: avoid; }  /* Ver1.7: .marks を追加 */
 
       header { padding-top: 0; }
       .no-print { display: none !important; }
@@ -293,6 +313,10 @@
     //   - 記憶のキーは unki_kantei_codes（受付フォーム Ver2.2 と共通。最大20件）
     // Ver1.6 (2026-10-31)
     //   - JS の変更なし（印刷の額縁は HTML と CSS のみで追加）
+    // Ver1.7 (2026-11-03)
+    //   - photoHtml に cls（追加のクラス）を追加
+    //   - marksHtml を追加：content.marks から「書き込みの説明」を作る
+    //   - resultCard：書き込み写真があればそれを表示し、説明と「元の写真を見る」を添える
     // =========================================================
 
     const CONFIG = {
@@ -374,10 +398,35 @@
     });
 
     // ---------- 表示 ----------
-    function photoHtml(url, alt) {
+    // Ver1.7: cls を追加（書き込み写真は 'marked'）
+    function photoHtml(url, alt, cls = '') {
       return url
-        ? `<img class="photo" src="${esc(url)}" alt="${esc(alt)}" onerror="this.outerHTML='<div class=&quot;photo-missing&quot;>写真の表示期限が切れています</div>'">`
+        ? `<img class="photo ${cls}" src="${esc(url)}" alt="${esc(alt)}" onerror="this.outerHTML='<div class=&quot;photo-missing&quot;>写真の表示期限が切れています</div>'">`
         : `<div class="photo-missing">写真はありません</div>`;
+    }
+
+    // Ver1.7 追加：書き込みの説明（番号は写真と同じく並び順）
+    function marksHtml(marks) {
+      const list = (marks || []).filter(m => m && (m.text || m.note));
+      if (!list.length) return '';
+      return `
+        <ol class="marks">
+          <li class="marks-ttl" style="display:block;">書き込みの説明</li>
+          ${(marks || []).map((m, i) => (m && (m.text || m.note)) ? `
+            <li><span class="no">${i + 1}</span>
+              <span>${esc(m.text)}${m.item ? `<span class="tag">${esc(m.item)}</span>` : ''}
+                ${m.note ? `<span class="sub">${br(m.note)}</span>` : ''}</span></li>` : '').join('')}
+        </ol>`;
+    }
+
+    // Ver1.7 追加：鑑定の写真（書き込み写真があればそちらを優先）
+    function phasePhotoHtml(r, c) {
+      const alt = `${CONFIG.PHASES[r.phase]}の写真`;
+      if (!c.marked_photo_url) return photoHtml(r.photo_url, alt);
+      return `
+        ${photoHtml(c.marked_photo_url, `${alt}（書き込み）`, 'marked')}
+        ${marksHtml(c.marks)}
+        ${r.photo_url ? `<details class="orig no-print"><summary>元の写真を見る</summary>${photoHtml(r.photo_url, alt)}</details>` : ''}`;
     }
 
     function resultCard(r, data, num) {
@@ -396,7 +445,7 @@
       return `
         <div class="card ${num > 1 ? 'page-break' : ''}">
           <div class="label"><span class="num">${num === 1 ? '一' : '二'}</span>${CONFIG.PHASES[r.phase] || ''}の鑑定</div>
-          ${photoHtml(r.photo_url, `${CONFIG.PHASES[r.phase]}の写真`)}
+          ${phasePhotoHtml(r, c)}  <!-- Ver1.6まで: photoHtml(r.photo_url, …) → Ver1.7: 書き込み写真に対応 -->
           <div class="meta"><span>鑑定日時：${jpDate(r.appraised_at)}</span></div>
           ${c.overall ? `
             <div class="overall">
