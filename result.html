@@ -40,6 +40,10 @@
          - 写真の下に「書き込みの説明」（番号・ひと言・関係する項目・補足）を表示。印刷（PDF）にも入る
          - 画面では「元の写真を見る」で書き込み前の写真も開ける（印刷には出さない）
          - 初回と一週間後の比較（並べた写真）は、同じ向きで見比べるため元の写真のまま
+       Ver2.0 (2026-11-05) 合言葉で入る方式に変更（supabase_v3.sql / 受付フォーム Ver3.0 と同時）
+         - 受付番号の入力 → 合言葉の入力に変更（.input の大文字・字間の指定は合言葉欄では外す .input.pass）
+         - 自分の鑑定の一覧（場所・受付日時・状況）のスタイルを追加（.list-*）
+         - 鑑定書の頭書きから受付番号を外す（HTML は JS で作るので CSS の変更はなし）
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -106,6 +110,27 @@
       font-family: 'Noto Sans JP', sans-serif;
     }
     .input:focus { border-color: var(--kin); }
+    .input.pass { font-size: 16px; letter-spacing: 0.05em; text-transform: none; }  /* Ver2.0 追加 */
+
+    /* 鑑定の一覧（Ver2.0 追加） */
+    .list-who { font-family: var(--kaisho); font-size: 18px; text-align: center; margin-bottom: 14px; }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .list-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%;
+      padding: 14px 16px; border: 1px solid var(--line); border-radius: 4px;
+      background: var(--washi); color: var(--sumi); cursor: pointer; text-align: left;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .list-item:hover { border-color: var(--kin); }
+    .list-item .p { font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 700; letter-spacing: 0.1em; }
+    .list-item .d { font-size: 13px; color: var(--sumi-soft); margin-top: 2px; }
+    .list-item .st {
+      flex-shrink: 0; font-size: 12px; padding: 2px 8px; border-radius: 3px;
+      border: 1px solid var(--line); color: var(--sumi-soft); background: var(--white);
+    }
+    .list-item .st.done { border-color: var(--koke); color: var(--koke); }
+    .list-empty { text-align: center; font-size: 14px; color: var(--sumi-soft); }
+    .link-btn { background: none; border: none; color: var(--sumi-soft); font-size: 12px; text-decoration: underline; cursor: pointer; }
     .btn {
       width: 100%; margin-top: 14px; padding: 16px; border: none; border-radius: 4px;
       background: var(--shu); color: var(--white);
@@ -271,18 +296,29 @@
   </header>
 
   <main id="main">
-    <!-- 受付番号の入力 -->
+    <!-- Ver1.7 まで：受付番号の入力 → Ver2.0：合言葉の入力 -->
     <div class="card no-print" id="codeCard">
-      <div class="label">受付番号</div>
-      <input class="input" type="text" id="code" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" />
-      <button class="btn" id="showBtn">結果を見る</button>
-      <p class="hint">※ 受付のときに表示された8桁の番号を入力してください。</p>
+      <div class="label">合言葉</div>
+      <input class="input pass" type="password" id="pass" maxlength="40" placeholder="お知らせした合言葉" autocomplete="current-password" />
+      <button class="btn" id="showBtn">鑑定の一覧を見る</button>
+      <p class="hint">※ 一度入れると、この端末が合言葉を覚えておきます。</p>
+    </div>
+    <!-- Ver2.0 追加：自分の鑑定の一覧（場所・受付日時から選ぶ） -->
+    <div class="card no-print" id="listCard" style="display:none;">
+      <div class="label">鑑定の一覧</div>
+      <div class="list-who" id="listWho"></div>
+      <div class="list" id="list"></div>
     </div>
     <div id="out"></div>
-    <!-- Ver1.1 追加：受付フォームへ戻る（番号入力画面でも表示） -->
+    <!-- Ver1.1 追加：受付フォームへ戻る（番号入力画面でも表示）
+         Ver2.0：「一覧へ戻る」「合言葉を忘れる」を追加 -->
     <div class="nav no-print" id="nav">
+      <button class="btn-line" id="backBtn" style="display:none;">一覧へ戻る</button>
       <a class="btn-line" href="index.html">受付へ戻る</a>
     </div>
+    <p class="center no-print" id="forgetWrap" style="display:none;">
+      <button class="link-btn" id="forgetBtn">この端末で合言葉を忘れる</button>
+    </p>
   </main>
 
   <footer class="no-print"><span>KAKERA PROJECT</span></footer>
@@ -317,6 +353,18 @@
     //   - photoHtml に cls（追加のクラス）を追加
     //   - marksHtml を追加：content.marks から「書き込みの説明」を作る
     //   - resultCard：書き込み写真があればそれを表示し、説明と「元の写真を見る」を添える
+    // Ver2.0 (2026-11-05) 合言葉で入る方式に変更（supabase_v3.sql / 受付フォーム Ver3.0 と同時）
+    //   - 受付番号の入力 → 合言葉の入力。fortune_login でその人の鑑定の一覧を取得
+    //   - 一覧は「場所・受付日時・状況（鑑定中／鑑定済 など）」で表示し、選ぶと鑑定書を表示
+    //     受付番号は画面に出さない（裏で使うだけ）
+    //   - 鑑定書の取得：fortune_get_result → fortune_get_result_by_pass（合言葉が必要・自分の分だけ）
+    //   - 合言葉はこの端末（localStorage：unki_kantei_pass。受付フォーム Ver3.0 と共通）に覚え、
+    //     次からは開くだけで一覧が出る。「この端末で合言葉を忘れる」で消せる
+    //   - 管理者の合言葉では全員分が一覧に出る（お名前つき。おとうくんの確認用）
+    //   - URL の ?code= は引き続き使える（unki_sync.py の公開後に開くページ用）。
+    //     ただし合言葉が合っていて、自分の受付（管理者は全員）のときだけ表示
+    //   - 「別の受付番号で見る」→「一覧へ戻る」に変更
+    //   - Ver1.2 の受付番号の記憶（unki_kantei_codes）は使わなくなったので消す
     // =========================================================
 
     const CONFIG = {
@@ -347,55 +395,135 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    $('code').addEventListener('input', e => {
-      const c = normalizeCode(e.target.value).slice(0, CONFIG.CODE_LENGTH);
-      e.target.value = c.length > 4 ? formatCode(c) : c;
-    });
+    // Ver1.7 まで：受付番号の入力の整形 → Ver2.0：削除（合言葉の入力に変更）
 
-    // ---------- この端末に受付番号を記憶（Ver1.2 追加） ----------
-    function rememberCode(code, name, date) {
-      try {
-        const KEY = 'unki_kantei_codes';
-        const list = JSON.parse(localStorage.getItem(KEY)) || [];
-        const old  = list.find(x => x.code === code);
-        const rest = list.filter(x => x.code !== code);
-        rest.unshift({ code, name: name || old?.name || '', date: old?.date || date || new Date().toISOString() });
-        localStorage.setItem(KEY, JSON.stringify(rest.slice(0, 20)));
-      } catch { /* 保存できなくても表示は続行 */ }
+    // ---------- 合言葉（Ver2.0 追加） ----------
+    const PASS_KEY = 'unki_kantei_pass';
+    function loadPass()  { try { return localStorage.getItem(PASS_KEY) || ''; } catch { return ''; } }
+    function savePass(p) { try { localStorage.setItem(PASS_KEY, p); } catch { /* 覚えられなくても表示は続行 */ } }
+    function forgetPass(){ try { localStorage.removeItem(PASS_KEY); } catch { } }
+    try { localStorage.removeItem('unki_kantei_codes'); } catch { }  // Ver1.2 の受付番号の記憶は使わない
+
+    const ERRORS = {
+      pass:     '合言葉がちがうようです',
+      locked:   '合言葉の打ち間違いが続いたため、しばらく受け付けを止めています。時間をおいてお試しください',
+      notfound: 'その鑑定は見つかりませんでした',
+    };
+    async function rpc(name, body) {
+      const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/${name}`, {
+        method: 'POST',
+        headers: {
+          'apikey': CONFIG.SUPABASE_KEY,
+          'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error('読み込めませんでした。通信状態を確かめてください');
+      const r = await res.json();
+      if (!r || !r.ok) throw Object.assign(new Error(ERRORS[r?.error] || '読み込めませんでした'), { code: r?.error });
+      return r;
     }
 
-    // ---------- 取得 ----------
-    async function load(code) {
+    let member = null;  // { pass, name, is_admin, items }
+
+    // 一覧の日時：2026年11月3日（火）20:15
+    function jpDateW(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    function statusOf(x) {
+      if (x.week1_done) return { text: '一週間後まで鑑定済', done: true };
+      if (x.week1_at)   return { text: '一週間後を鑑定中',   done: false };
+      if (x.first_done) return { text: '鑑定済',             done: true };
+      return { text: '鑑定中', done: false };
+    }
+
+    // ---------- 合言葉で入る ----------
+    async function login(pass, quiet = false) {
       const btn = $('showBtn');
-      btn.disabled = true; btn.textContent = '読み込んでいます…';
+      btn.disabled = true; btn.textContent = '確かめています…';
       try {
-        const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/fortune_get_result`, {
-          method: 'POST',
-          headers: {
-            'apikey': CONFIG.SUPABASE_KEY,
-            'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ p_code: code }),
-        });
-        if (!res.ok) throw new Error('結果を読み込めませんでした');
-        const data = await res.json();
-        if (!data) throw new Error('その受付番号は見つかりませんでした');
-        history.replaceState(null, '', `?code=${code}`);
-        rememberCode(code, data.name, data.requests?.[0]?.created_at);  // Ver1.2 追加
-        render(code, data);
+        const r = await rpc('fortune_login', { p_pass: pass });
+        member = { pass, name: r.name, is_admin: !!r.is_admin, items: r.items || [] };
+        savePass(pass);
+        const qCode = new URLSearchParams(location.search).get('code');
+        if (qCode && member.items.some(x => x.code === qCode)) openResult(qCode, true);
+        else showList();
+      } catch (e) {
+        if (e.code === 'pass') forgetPass();
+        if (!quiet || e.code !== 'pass') showToast(e.message);
+        showPassCard();
+      } finally {
+        btn.disabled = false; btn.textContent = '鑑定の一覧を見る';
+      }
+    }
+
+    function showPassCard() {
+      member = null;
+      $('codeCard').style.display = 'block';
+      $('listCard').style.display = 'none';
+      $('out').innerHTML = '';
+      $('backBtn').style.display = 'none';
+      $('forgetWrap').style.display = 'none';
+    }
+
+    // ---------- 一覧 ----------
+    function showList() {
+      history.replaceState(null, '', location.pathname);
+      $('codeCard').style.display = 'none';
+      $('out').innerHTML = '';
+      $('backBtn').style.display = 'none';
+      $('forgetWrap').style.display = 'block';
+      $('listCard').style.display = 'block';
+      $('listWho').textContent = member.is_admin ? `${member.name} さま（全員分を表示）` : `${member.name} さまの鑑定`;
+      $('list').innerHTML = member.items.length
+        ? member.items.map(x => {
+            const st = statusOf(x);
+            return `
+              <button class="list-item" data-code="${esc(x.code)}">
+                <span>
+                  <span class="p">${esc(CONFIG.PLACES[x.place] || x.place)}</span>
+                  <span class="d" style="display:block;">${member.is_admin && x.name ? `${esc(x.name)} さま　` : ''}${esc(jpDateW(x.first_at || x.week1_at))} 受付</span>
+                </span>
+                <span class="st ${st.done ? 'done' : ''}">${st.text}</span>
+              </button>`;
+          }).join('')
+        : '<p class="list-empty">まだ鑑定の受付はありません。<br>受付から写真を送ってくださいね。</p>';
+      $('list').querySelectorAll('.list-item').forEach(b =>
+        b.addEventListener('click', () => openResult(b.dataset.code)));
+      window.scrollTo({ top: 0 });
+    }
+
+    // ---------- 鑑定書を開く ----------
+    async function openResult(code, replace = false) {
+      try {
+        const r = await rpc('fortune_get_result_by_pass', { p_pass: member.pass, p_code: code });
+        const url = `${location.pathname}?code=${encodeURIComponent(code)}`;
+        if (replace) history.replaceState({ code }, '', url); else history.pushState({ code }, '', url);
+        render(code, r.data);
       } catch (e) {
         showToast(e.message);
-      } finally {
-        btn.disabled = false; btn.textContent = '結果を見る';
+        if (e.code === 'pass') { forgetPass(); showPassCard(); } else showList();
       }
     }
 
     $('showBtn').addEventListener('click', () => {
-      const code = normalizeCode($('code').value);
-      if (code.length !== CONFIG.CODE_LENGTH) { showToast('8桁の受付番号を入力してください'); return; }
-      load(code);
+      const pass = $('pass').value.trim();
+      if (!pass) { showToast('合言葉を入力してください'); return; }
+      login(pass);
     });
+    $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') $('showBtn').click(); });
+    $('backBtn').addEventListener('click', () => { if (member) showList(); });
+    $('forgetBtn').addEventListener('click', () => {
+      forgetPass(); $('pass').value = ''; showPassCard();
+      history.replaceState(null, '', location.pathname);
+      showToast('この端末から合言葉を消しました');
+    });
+    // スマホの「戻る」で一覧に戻れるように
+    window.addEventListener('popstate', () => { if (member) showList(); });
 
     // ---------- 表示 ----------
     // Ver1.7: cls を追加（書き込み写真は 'marked'）
@@ -493,6 +621,8 @@
 
     function render(code, data) {
       $('codeCard').style.display = 'none';
+      $('listCard').style.display = 'none';      // Ver2.0 追加
+      $('backBtn').style.display = 'inline-block'; // Ver2.0 追加
       const first = data.results.find(r => r.phase === 'first');
       const week1 = data.results.find(r => r.phase === 'week1');
       const received = data.requests.map(q => `${CONFIG.PHASES[q.phase]}：${jpDate(q.created_at)}`).join('　');
@@ -503,7 +633,7 @@
             <div class="ttl">運気鑑定書</div>
             <div class="who">${esc(data.name)} さま</div>
             <div class="meta">
-              <span>受付番号：${formatCode(code)}</span>
+              <!-- Ver2.0：受付番号の表示を外す -->
               <span>鑑定場所：${esc(CONFIG.PLACES[data.place] || data.place)}</span>
             </div>
             <div class="meta"><span>受付　${received}</span></div>
@@ -535,19 +665,16 @@
       }
 
       // Ver1.0: #out の最後に「別の受付番号で見る」を追加 → Ver1.1: 下のナビに移動
+      // Ver2.0:「別の受付番号で見る」→「一覧へ戻る」（#backBtn）に変更
       $('out').innerHTML = html;
-      if (!document.getElementById('anotherBtn')) {
-        $('nav').insertAdjacentHTML('afterbegin', '<a class="btn-line" id="anotherBtn" href="result.html">別の受付番号で見る</a>');
-      }
       window.scrollTo({ top: 0 });
     }
 
-    // ---------- URLに番号があれば自動で表示 ----------
-    const qCode = normalizeCode(new URLSearchParams(location.search).get('code'));
-    if (qCode.length === CONFIG.CODE_LENGTH) {
-      $('code').value = formatCode(qCode);
-      load(qCode);
-    }
+    // ---------- 開いたとき ----------
+    // Ver1.7 まで：URLに番号があれば自動で表示
+    // Ver2.0：覚えている合言葉があれば一覧（URL に ?code= があり自分の受付ならその鑑定書）を表示
+    const saved = loadPass();
+    if (saved) { $('pass').value = saved; login(saved, true); }
   </script>
 </body>
 </html>

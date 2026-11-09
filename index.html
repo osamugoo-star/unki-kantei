@@ -33,6 +33,10 @@
          - フッター「KAKERA PROJECT」に和紙色の札を敷く（青海波と重なって読めないため）
        Ver2.5 (2026-10-29) 鑑定する場所を 3列 → 2列×2段（4つの選択肢に対応）
        Ver2.6 (2026-10-29) 受付番号の下に、初回の場所を知らせる一文（.code-note）のスタイルを追加
+       Ver3.0 (2026-11-05) 合言葉で入る方式に変更（supabase_v3.sql と同時）
+         - 「お名前」欄 → 「合言葉」欄（入力前／入力済みの2つの表示）のスタイルを追加（.pass-*）
+         - 一週間後の「受付番号の入力欄」→「初回の受付から選ぶ一覧」（.pick-*）に変更
+         - 完了画面の受付番号の表示（.receipt）は使わなくなったが、スタイルは残す
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -158,6 +162,35 @@
     .code-note:empty { display: none; }
     .code-note.err { color: var(--shu); }
 
+    /* 合言葉（Ver3.0 追加） */
+    .pass-row { display: flex; gap: 8px; }
+    .pass-row .input { flex: 1; }
+    .btn-small {
+      flex-shrink: 0; padding: 0 16px; border: 1px solid var(--sumi); border-radius: 4px;
+      background: var(--sumi); color: var(--white);
+      font-family: 'Shippori Mincho', serif; font-size: 15px; cursor: pointer;
+    }
+    .btn-small:disabled { opacity: 0.5; }
+    .pass-ok { display: none; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 12px 14px; background: var(--washi); border-radius: 4px; }
+    .pass-ok.show { display: flex; }
+    .pass-ok .who { font-family: var(--kaisho); font-size: 19px; font-weight: 600; }
+    .link-btn { background: none; border: none; color: var(--sumi-soft); font-size: 12px; text-decoration: underline; cursor: pointer; }
+
+    /* 一週間後：初回の受付から選ぶ（Ver3.0 追加。Ver2.6 までの受付番号欄の代わり） */
+    .pick-list { display: flex; flex-direction: column; gap: 8px; }
+    .pick {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 12px 14px; border: 1px solid var(--line); border-radius: 4px;
+      background: var(--washi); color: var(--sumi); cursor: pointer; text-align: left;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .pick .p { font-family: 'Shippori Mincho', serif; font-size: 16px; font-weight: 700; letter-spacing: 0.08em; }
+    .pick .d { font-size: 12px; color: var(--sumi-soft); text-align: right; }
+    .pick.selected { background: var(--sumi); border-color: var(--sumi); color: var(--white); }
+    .pick.selected .d { color: #D9D0C0; }
+    .pick-empty { font-size: 13px; color: var(--sumi-soft); }
+
     /* 写真 */
     .upload {
       position: relative; border: 1px dashed var(--kin); border-radius: 4px;
@@ -240,18 +273,27 @@
   </header>
 
   <!-- Ver2.0：「鑑定書は後日お届け」→「受付番号で結果を見られる」に変更 -->
+  <!-- Ver3.0：「受付番号で」→「合言葉で」に変更 -->
   <p class="intro">
     お預かりした写真をもとに、日本の暦や昔ながらの住まいの知恵から、
     これからの過ごし方をそっと添えてお返しします。
-    鑑定ができあがりましたら、受付番号で結果をご覧いただけます。
+    鑑定ができあがりましたら、合言葉を入れて結果をご覧いただけます。
   </p>
 
   <div class="form-wrap" id="formWrap">
 
-    <!-- 一　お名前 -->
+    <!-- 一　合言葉（Ver2.6 まで：お名前 → Ver3.0：合言葉。お名前は名簿から自動で入る） -->
     <div class="card">
-      <div class="label"><span class="num">一</span>お名前<span class="req">必須</span></div>
-      <input class="input" type="text" id="name" maxlength="30" placeholder="ニックネームでも構いません" />
+      <div class="label"><span class="num">一</span>合言葉<span class="req">必須</span></div>
+      <div class="pass-row" id="passRow">
+        <input class="input" type="password" id="pass" maxlength="40" placeholder="お知らせした合言葉" autocomplete="current-password" />
+        <button class="btn-small" type="button" id="passBtn">確かめる</button>
+      </div>
+      <div class="pass-ok" id="passOk">
+        <span class="who" id="passWho"></span>
+        <button class="link-btn" type="button" id="passForget">別の合言葉にする</button>
+      </div>
+      <p class="hint" id="passHint">※ 一度確かめると、この端末が合言葉を覚えておきます。</p>
     </div>
 
     <!-- 二　鑑定する場所（CONFIG.PLACES から生成） -->
@@ -259,7 +301,8 @@
       <div class="label"><span class="num">二</span>鑑定する場所<span class="req">必須</span></div>
       <!-- Ver2.4まで: choices three・玄関のみ → Ver2.5: choices two（2×2）・3か所受付 -->
       <div class="choices two" id="placeChoices"></div>
-      <p class="hint">※ ただいまは「玄関」「デスクまわり」「リビング」の3か所を承っています。<br>※ 一週間後は、初回の受付番号を入れると、初回と同じ場所が自動で選ばれます。</p>
+      <!-- Ver3.0：「初回の受付番号を入れると」→「初回の受付を選ぶと」 -->
+      <p class="hint">※ ただいまは「玄関」「デスクまわり」「リビング」の3か所を承っています。<br>※ 一週間後は、初回の受付を選ぶと、初回と同じ場所が自動で選ばれます。</p>
     </div>
 
     <!-- 三　撮影の時期（CONFIG.PHASES から生成） -->
@@ -267,12 +310,13 @@
       <div class="label"><span class="num">三</span>撮影の時期<span class="req">必須</span></div>
       <div class="choices two" id="phaseChoices"></div>
       <p class="hint">※ 一週間後の写真は、初回と同じ位置・同じ向きから撮ってください。</p>
-      <!-- Ver2.0 追加：一週間後のときだけ表示 -->
+      <!-- Ver2.0 追加：一週間後のときだけ表示
+           Ver3.0：受付番号の入力欄 → 初回の受付（場所・受付日時）から選ぶ一覧に変更 -->
       <div class="code-box" id="codeBox">
-        <p class="sub">初回の受付番号</p>
-        <input class="input code" type="text" id="code" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" />
+        <p class="sub">どの受付の一週間後ですか</p>
+        <div class="pick-list" id="pickList"></div>
         <p class="code-note" id="codeNote"></p><!-- Ver2.6 追加 -->
-        <p class="hint">※ 初回のときに表示された8桁の番号です。初回の写真と見比べて鑑定します。</p>
+        <p class="hint">※ 初回の写真と見比べて鑑定します。</p>
       </div>
     </div>
 
@@ -303,27 +347,27 @@
 
     <button class="submit" id="submit">鑑定をお願いする</button>
 
-    <!-- Ver2.2 追加：鑑定結果への入口 -->
+    <!-- Ver2.2 追加：鑑定結果への入口
+         Ver3.0：この端末の受付番号の一覧をやめ、結果ページ（合言葉で一覧が出る）へのボタンだけに -->
     <div class="card my-card">
       <div class="label">鑑定結果を見る</div>
-      <div class="my-list" id="myList"></div>
-      <a class="btn-line" href="result.html">受付番号を入力して見る</a>
-      <p class="hint">※ この端末で受け付けた番号だけが表示されます。機種変更や履歴の削除で消えることがあるので、受付番号は控えておいてください。</p>
+      <a class="btn-line" href="result.html">これまでの鑑定を見る</a>
+      <p class="hint">※ 合言葉を入れると、これまでの鑑定が「場所と受付日時」の一覧で出てきます。</p>
     </div>
   </div>
 
-  <!-- 完了表示（Ver2.0：受付番号と結果ページへの導線を追加） -->
+  <!-- 完了表示（Ver2.0：受付番号と結果ページへの導線を追加）
+       Ver3.0：受付番号の表示・コピーをやめ、場所と受付日時の表示に変更 -->
   <div class="done" id="done">
     <div class="card">
       <h2>お預かりしました</h2>
       <p id="doneText"></p>
       <div class="receipt">
-        <div class="cap">受付番号</div>
-        <div class="no" id="receiptNo"></div>
+        <div class="cap" id="receiptCap"></div>
+        <div class="no" id="receiptNo" style="font-size:22px;letter-spacing:0.08em;"></div>
       </div>
-      <p style="font-size:12px;">この番号で結果をご覧いただけます。<br>画面を保存するか、番号を控えておいてください。</p>
+      <p style="font-size:12px;">結果ページで合言葉を入れると、一覧に出てきます。</p>
       <div class="btns">
-        <button class="btn-line" id="copyBtn">受付番号をコピー</button>
         <a class="btn-line btn-fill" id="resultLink" href="result.html">結果ページを開く</a>
         <button class="btn-line" id="again">続けてもう一枚送る</button>
       </div>
@@ -370,6 +414,16 @@
     //   - その間、ほかの場所は押せないように固定（初回を選び直すと元に戻る）
     //   - お名前が空なら、初回のお名前も入れる
     //   - 送信時にも、初回と場所が一致しているか確認
+    // Ver3.0 (2026-11-05) 合言葉で入る方式に変更（supabase_v3.sql / 結果ページ Ver2.0 と同時）
+    //   - 「お名前」欄をやめ「合言葉」欄に。お名前は Supabase の名簿（fortune_members）から自動で入る
+    //   - 合言葉は fortune_login で確かめ、この端末（localStorage：unki_kantei_pass）に覚える
+    //     結果ページ Ver2.0 と共通。「別の合言葉にする」で忘れる
+    //   - 一週間後は、受付番号の入力 → 自分の初回の受付（場所・受付日時）から選ぶ方式に変更
+    //     一週間後をまだ送っていない初回だけが出る。選ぶと場所が自動で決まり、ほかは押せない
+    //   - 登録は、テーブルへの直接登録 → 関数 fortune_submit（合言葉が必要）に変更
+    //   - 受付番号は裏で使うだけにして、画面には出さない（作り方は Ver2.0 のまま）
+    //   - 完了画面：受付番号の表示・コピー → 場所と受付日時の表示に変更
+    //   - この端末の受付番号の一覧（Ver2.2 の unki_kantei_codes）は使わなくなったので消す
     // =========================================================
 
     // ---------- 設定（ここだけ直せば運用を変えられる） ----------
@@ -380,7 +434,7 @@
       TABLE:  'fortune_requests',
       MAX_EDGE_PX:  2000,  // 縮小後の長辺
       JPEG_QUALITY: 0.85,
-      CODE_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',  // Ver2.0 追加：受付番号に使う文字
+      CODE_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',  // Ver2.0 追加：受付番号に使う文字（Ver3.0 からは画面に出さない）
       CODE_LENGTH: 8,                                  // Ver2.0 追加
       PLACES: [
         // Ver2.4まで: 玄関のみ受付（机まわり・居間は準備中）
@@ -401,31 +455,106 @@
       'apikey': CONFIG.SUPABASE_KEY,
       'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
     };
+    const PASS_KEY = 'unki_kantei_pass';   // Ver3.0 追加：結果ページ Ver2.0 と共通
 
     // ---------- 状態 ----------
     let selectedPlace = null;
     let selectedPhase = null;
     let selectedFile  = null;
+    let selectedFirst = null;   // Ver3.0 追加：一週間後で選んだ初回の受付
+    let member = null;          // Ver3.0 追加：合言葉で確かめた人 { pass, name, is_admin, items }
 
-    // ---------- 受付番号（Ver2.0 追加） ----------
+    // ---------- 受付番号（Ver2.0 追加。Ver3.0 からは裏で使うだけ） ----------
     function newCode() {
       const chars = CONFIG.CODE_CHARS;
       const buf = new Uint32Array(CONFIG.CODE_LENGTH);
       crypto.getRandomValues(buf);
       return Array.from(buf, n => chars[n % chars.length]).join('');
     }
-    function normalizeCode(s) { return (s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
-    function formatCode(c)    { return `${c.slice(0, 4)}-${c.slice(4)}`; }
+    // Ver3.0：normalizeCode・formatCode・codeExists は不要になったので削除
 
-    async function codeExists(code) {
-      const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/fortune_code_exists`, {
+    // ---------- 共通（Ver3.0 追加） ----------
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function jpDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const p = n => String(n).padStart(2, '0');
+      const w = '日月火水木金土'[d.getDay()];
+      return `${d.getMonth() + 1}月${d.getDate()}日（${w}）${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    const placeLabel = code => CONFIG.PLACES.find(p => p.code === code)?.label || code;
+
+    async function rpc(name, body) {
+      const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/${name}`, {
         method: 'POST',
         headers: { ...HEADERS, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_code: code }),
+        body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error('受付番号を確認できませんでした');
-      return (await res.json()) === true;
+      if (!res.ok) throw new Error('通信に失敗しました。通信状態を確かめてください');
+      return res.json();
     }
+    const ERRORS = {
+      pass:     '合言葉がちがうようです',
+      locked:   '合言葉の打ち間違いが続いたため、しばらく受け付けを止めています。時間をおいてお試しください',
+      notfound: '初回の受付が見つかりませんでした',
+      already:  'この受付の一週間後の写真は、すでにお預かりしています',
+      dup:      'もう一度「鑑定をお願いする」を押してください',
+      memo:     '気になっていることは200文字までにしてください',
+    };
+    const errText = code => ERRORS[code] || '受付の登録に失敗しました';
+
+    // ---------- 合言葉（Ver3.0 追加） ----------
+    function loadPass()  { try { return localStorage.getItem(PASS_KEY) || ''; } catch { return ''; } }
+    function savePass(p) { try { localStorage.setItem(PASS_KEY, p); } catch { /* 覚えられなくても続行 */ } }
+    function forgetPass(){ try { localStorage.removeItem(PASS_KEY); } catch { } }
+    try { localStorage.removeItem('unki_kantei_codes'); } catch { }  // Ver2.2 の受付番号の記憶は使わない
+
+    function showMember() {
+      const ok = !!member;
+      document.getElementById('passRow').style.display = ok ? 'none' : 'flex';
+      document.getElementById('passOk').classList.toggle('show', ok);
+      document.getElementById('passHint').style.display = ok ? 'none' : 'block';
+      document.getElementById('passWho').textContent = ok ? `${member.name} さま` : '';
+      if (selectedPhase === 'week1') renderPicks();
+    }
+
+    async function login(pass, quiet = false) {
+      const btn = document.getElementById('passBtn');
+      btn.disabled = true; btn.textContent = '確認中…';
+      try {
+        const r = await rpc('fortune_login', { p_pass: pass });
+        if (!r.ok) {
+          if (r.error === 'pass') forgetPass();
+          if (!quiet) showToast(errText(r.error), 'error');
+          member = null;
+        } else {
+          member = { pass, name: r.name, is_admin: !!r.is_admin, items: r.items || [] };
+          savePass(pass);
+        }
+      } catch (e) {
+        if (!quiet) showToast(e.message, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = '確かめる';
+        showMember();
+      }
+    }
+
+    document.getElementById('passBtn').addEventListener('click', () => {
+      const pass = document.getElementById('pass').value.trim();
+      if (!pass) { showToast('合言葉を入力してください', 'error'); return; }
+      login(pass);
+    });
+    document.getElementById('pass').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('passBtn').click();
+    });
+    document.getElementById('passForget').addEventListener('click', () => {
+      forgetPass(); member = null;
+      document.getElementById('pass').value = '';
+      selectFirst(null);
+      showMember();
+    });
 
     // ---------- 選択ボタンの生成 ----------
     function buildChoices(containerId, items, onSelect) {
@@ -449,23 +578,15 @@
     buildChoices('placeChoices', CONFIG.PLACES, code => { selectedPlace = code; });
     buildChoices('phaseChoices', CONFIG.PHASES, code => {
       selectedPhase = code;
-      // Ver2.0 追加：一週間後のときだけ受付番号欄を表示
+      // Ver2.0 追加：一週間後のときだけ受付番号欄を表示（Ver3.0：初回の受付の一覧に）
       document.getElementById('codeBox').classList.toggle('show', code === 'week1');
-      // Ver2.6 追加：一週間後なら初回の場所を調べる、初回なら固定を解く
-      if (code === 'week1') lookupFirstPlace();
-      else { lockPlaces(null); setCodeNote(''); }
-    });
-
-    // 受付番号の入力を XXXX-XXXX に整える（Ver2.0 追加）
-    document.getElementById('code').addEventListener('input', e => {
-      const c = normalizeCode(e.target.value).slice(0, CONFIG.CODE_LENGTH);
-      e.target.value = c.length > 4 ? formatCode(c) : c;
-      if (selectedPhase === 'week1') lookupFirstPlace();  // Ver2.6 追加
+      // Ver2.6：一週間後なら初回の場所を調べる → Ver3.0：初回の受付の一覧を出す
+      if (code === 'week1') renderPicks();
+      else { selectFirst(null); }
     });
 
     // ---------- 初回の場所を自動で選ぶ（Ver2.6 追加） ----------
     let lockedPlace = null;   // 初回から決まった場所（固定中）
-    let lookupSeq = 0;        // 入力中の古い問い合わせ結果を捨てるための番号
 
     function setCodeNote(text, isErr = false) {
       const n = document.getElementById('codeNote');
@@ -486,36 +607,42 @@
         b.disabled = code ? b.dataset.code !== code : b.dataset.enabled === '0';
       });
     }
+    // Ver3.0：lookupFirstPlace（受付番号から調べる）は削除し、下の renderPicks / selectFirst に置き換え
 
-    async function lookupFirstPlace() {
-      const code = normalizeCode(document.getElementById('code').value);
-      const seq = ++lookupSeq;
-      if (code.length !== CONFIG.CODE_LENGTH) { lockPlaces(null); setCodeNote(''); return; }
-      setCodeNote('初回の受付を確認しています…');
-      try {
-        const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/fortune_get_result`, {
-          method: 'POST',
-          headers: { ...HEADERS, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ p_code: code }),
-        });
-        if (seq !== lookupSeq) return;  // その間に入力が変わった
-        const data = res.ok ? await res.json() : null;
-        if (seq !== lookupSeq) return;
-        if (!data || !data.place) {
-          lockPlaces(null);
-          setCodeNote('その受付番号は見つかりませんでした', true);
-          return;
-        }
-        const label = CONFIG.PLACES.find(p => p.code === data.place)?.label || data.place;
-        selectPlace(data.place);
-        lockPlaces(data.place);
-        const nameInput = document.getElementById('name');
-        if (!nameInput.value.trim() && data.name) nameInput.value = data.name;
-        setCodeNote(`初回の場所「${label}」を選びました`);
-      } catch {
-        if (seq !== lookupSeq) return;
+    // ---------- 一週間後：初回の受付から選ぶ（Ver3.0 追加） ----------
+    function renderPicks() {
+      const box = document.getElementById('pickList');
+      if (!member) {
+        box.innerHTML = '<p class="pick-empty">先に「一　合言葉」を確かめてください。</p>';
+        return;
+      }
+      // 一週間後をまだ送っていない初回だけ
+      const list = member.items.filter(x => x.first_at && !x.week1_at);
+      if (!list.length) {
+        box.innerHTML = '<p class="pick-empty">一週間後を送れる初回の受付はありません。</p>';
+        selectFirst(null);
+        return;
+      }
+      box.innerHTML = list.map(x => `
+        <button type="button" class="pick ${selectedFirst?.code === x.code ? 'selected' : ''}" data-code="${esc(x.code)}">
+          <span class="p">${esc(placeLabel(x.place))}</span>
+          <span class="d">${member.is_admin && x.name ? `${esc(x.name)} さま<br>` : ''}${esc(jpDate(x.first_at))} 受付</span>
+        </button>`).join('');
+      box.querySelectorAll('.pick').forEach(b => b.addEventListener('click', () => {
+        selectFirst(list.find(x => x.code === b.dataset.code));
+        box.querySelectorAll('.pick').forEach(o => o.classList.toggle('selected', o === b));
+      }));
+    }
+
+    function selectFirst(item) {
+      selectedFirst = item || null;
+      if (item) {
+        selectPlace(item.place);
+        lockPlaces(item.place);
+        setCodeNote(`初回の場所「${placeLabel(item.place)}」を選びました`);
+      } else {
         lockPlaces(null);
-        setCodeNote('受付番号を確認できませんでした。通信状態を確かめてください', true);
+        setCodeNote('');
       }
     }
 
@@ -589,19 +716,18 @@
 
     // ---------- 送信 ----------
     document.getElementById('submit').addEventListener('click', async () => {
-      const name = document.getElementById('name').value.trim();
       const memo = document.getElementById('memo').value.trim();
-      const inputCode = normalizeCode(document.getElementById('code').value);
 
-      if (!name)          { showToast('お名前を入力してください', 'error'); return; }
+      // Ver2.6 まで：お名前・受付番号の確認 → Ver3.0：合言葉・初回の受付の確認
+      if (!member)        { showToast('先に合言葉を確かめてください', 'error'); return; }
       if (!selectedPlace) { showToast('鑑定する場所を選んでください', 'error'); return; }
       if (!selectedPhase) { showToast('撮影の時期を選んでください', 'error'); return; }
-      if (selectedPhase === 'week1' && inputCode.length !== CONFIG.CODE_LENGTH) {
-        showToast('初回の受付番号（8桁）を入力してください', 'error'); return;
+      if (selectedPhase === 'week1' && !selectedFirst) {
+        showToast('どの受付の一週間後かを選んでください', 'error'); return;
       }
       // Ver2.6 追加：一週間後は初回と同じ場所であること
       if (selectedPhase === 'week1' && lockedPlace !== selectedPlace) {
-        showToast('初回の場所を確認できません。受付番号を確かめてください', 'error'); return;
+        showToast('初回の場所を確認できません。初回の受付を選び直してください', 'error'); return;
       }
       if (!selectedFile)  { showToast('写真を選んでください', 'error'); return; }
 
@@ -610,35 +736,23 @@
       btn.textContent = 'お預かりしています…';
 
       try {
-        // Ver2.0 追加：受付番号の決定
-        let code;
-        if (selectedPhase === 'first') {
-          code = newCode();
-        } else {
-          if (!(await codeExists(inputCode))) throw new Error('その受付番号は見つかりませんでした');
-          code = inputCode;
-        }
+        // Ver2.0 追加：受付番号の決定（Ver3.0：一週間後は選んだ初回の番号）
+        const code = selectedPhase === 'first' ? newCode() : selectedFirst.code;
 
         const photoPath = await uploadPhoto(code);
-        const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${CONFIG.TABLE}`, {
-          method: 'POST',
-          headers: { ...HEADERS, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-          body: JSON.stringify({
-            name,
-            place: selectedPlace,
-            phase: selectedPhase,
-            memo: memo || null,
-            photo_path: photoPath,
-            code,
-          }),
+        // Ver2.6 まで：fortune_requests へ直接登録 → Ver3.0：fortune_submit（合言葉が必要）
+        const r = await rpc('fortune_submit', {
+          p_pass: member.pass,
+          p_code: code,
+          p_place: selectedPlace,
+          p_phase: selectedPhase,
+          p_memo: memo || null,
+          p_photo_path: photoPath,
         });
-        if (!res.ok) {
-          // 同じ番号で一週間後を2回送った場合など
-          if (res.status === 409) throw new Error('この受付番号の一週間後の写真は、すでにお預かりしています');
-          throw new Error('受付の登録に失敗しました');
-        }
+        if (!r.ok) throw new Error(errText(r.error));
 
-        showDone(code);
+        showDone(r.place);
+        login(member.pass, true);  // 一覧を新しくする（一週間後の選択肢に反映）
       } catch (e) {
         showToast(e.message, 'error');
       } finally {
@@ -648,72 +762,42 @@
     });
 
     // ---------- この端末の受付番号（Ver2.2 追加） ----------
-    const STORE_KEY = 'unki_kantei_codes';
-    const STORE_MAX = 20;
-    function esc(s) {
-      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    }
-    function loadCodes() {
-      try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
-    }
-    function saveCode(code, name) {
-      try {
-        const list = loadCodes().filter(x => x.code !== code);
-        const old  = loadCodes().find(x => x.code === code);
-        list.unshift({ code, name: name || old?.name || '', date: old?.date || new Date().toISOString() });
-        localStorage.setItem(STORE_KEY, JSON.stringify(list.slice(0, STORE_MAX)));
-      } catch { /* 保存できなくても続行 */ }
-    }
-    function renderMyCodes() {
-      const box = document.getElementById('myList');
-      const list = loadCodes();
-      box.style.display = list.length ? 'flex' : 'none';
-      box.innerHTML = list.map(x => {
-        const d = new Date(x.date);
-        const day = isNaN(d) ? '' : `${d.getMonth() + 1}月${d.getDate()}日受付`;
-        return `<a class="my-item" href="result.html?code=${esc(x.code)}">
-                  <span class="c">${esc(formatCode(x.code))}</span>
-                  <span class="s">${esc(x.name)}${x.name ? ' さま<br>' : ''}${day}</span>
-                </a>`;
-      }).join('');
-    }
-    renderMyCodes();
+    // Ver3.0：合言葉で一覧が出るようになったため削除（loadCodes / saveCode / renderMyCodes）
 
     // ---------- 完了画面（Ver2.0 追加） ----------
-    function showDone(code) {
-      saveCode(code, document.getElementById('name').value.trim());  // Ver2.2 追加
-      renderMyCodes();
+    // Ver3.0：受付番号の表示・コピー → 場所と受付日時の表示に変更
+    function showDone(place) {
       document.getElementById('doneText').innerHTML = selectedPhase === 'first'
-        ? 'ありがとうございます。<br>鑑定ができあがりましたら、結果ページでご覧いただけます。<br>一週間後にも、同じ場所の写真をお願いしますね。'
-        : 'ありがとうございます。<br>初回の写真と見比べて鑑定します。<br>できあがりましたら、結果ページでご覧いただけます。';
-      document.getElementById('receiptNo').textContent = formatCode(code);
-      document.getElementById('resultLink').href = `result.html?code=${code}`;
-      document.getElementById('copyBtn').onclick = async () => {
-        try { await navigator.clipboard.writeText(formatCode(code)); showToast('受付番号をコピーしました'); }
-        catch { showToast('コピーできませんでした。番号を控えてください', 'error'); }
-      };
+        ? `${esc(member.name)} さま、ありがとうございます。<br>鑑定ができあがりましたら、結果ページでご覧いただけます。<br>一週間後にも、同じ場所の写真をお願いしますね。`
+        : `${esc(member.name)} さま、ありがとうございます。<br>初回の写真と見比べて鑑定します。<br>できあがりましたら、結果ページでご覧いただけます。`;
+      document.getElementById('receiptCap').textContent =
+        `${placeLabel(place)}（${CONFIG.PHASES.find(p => p.code === selectedPhase)?.label || ''}）`;
+      document.getElementById('receiptNo').textContent = `${jpDate(new Date().toISOString())} 受付`;
       document.getElementById('formWrap').style.display = 'none';
       document.getElementById('done').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ---------- 続けてもう一枚（名前は残す） ----------
+    // ---------- 続けてもう一枚（合言葉は残す） ----------
     document.getElementById('again').addEventListener('click', () => {
       selectedPhase = null;
       selectedFile  = null;
       document.getElementById('memo').value = '';
-      document.getElementById('code').value = '';
       document.getElementById('photo').value = '';
       document.getElementById('preview').style.display = 'none';
       document.getElementById('uploadMark').textContent = '＋';
       document.getElementById('uploadText').textContent = 'タップして写真を選ぶ';
       document.getElementById('codeBox').classList.remove('show');
-      lockPlaces(null);   // Ver2.6 追加
-      setCodeNote('');
+      selectFirst(null);  // Ver2.6：lockPlaces(null) → Ver3.0：初回の選択も解く
       document.querySelectorAll('#phaseChoices .choice').forEach(b => b.classList.remove('selected'));
       document.getElementById('done').style.display = 'none';
       document.getElementById('formWrap').style.display = 'flex';
     });
+
+    // ---------- 開いたとき：覚えている合言葉で入る（Ver3.0 追加） ----------
+    showMember();
+    const saved = loadPass();
+    if (saved) { document.getElementById('pass').value = saved; login(saved, true); }
   </script>
 </body>
 </html>
