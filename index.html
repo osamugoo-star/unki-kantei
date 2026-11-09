@@ -37,6 +37,12 @@
          - 「お名前」欄 → 「合言葉」欄（入力前／入力済みの2つの表示）のスタイルを追加（.pass-*）
          - 一週間後の「受付番号の入力欄」→「初回の受付から選ぶ一覧」（.pick-*）に変更
          - 完了画面の受付番号の表示（.receipt）は使わなくなったが、スタイルは残す
+       Ver4.0 (2026-11-10) 画面の作り直し（supabase_v4.sql / 結果ページ Ver2.1 と同時）
+         - トップ画面（申し込む／過去の鑑定）・合言葉・申し込み・一覧・一週間後・完了の画面に分けた（.screen）
+         - トップの大きな選択ボタン（.menu-btn）、合言葉の人の表示（.userbar）、戻る（.back）を追加
+         - 一覧の状況表示（.st-chip：初回・一週間後のそれぞれの状況）を追加
+         - 一週間後の画面に、初回の写真の表示（.first-photo）を追加
+         - 場所・時期の選択ボタン（.choice）、初回の受付から選ぶ一覧（.pick-*）は使わなくなったが、スタイルは残す
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -261,6 +267,66 @@
       display: inline-block; padding: 4px 16px 4px 19px;
       background: var(--white); border: 1px solid var(--line); border-radius: 4px;
     }
+
+    /* ===== Ver4.0 追加：画面の切り替え ===== */
+    .screen { display: none; }
+    .screen.show { display: block; }
+    .screen .form-wrap { margin-top: 22px; }
+
+    /* トップ：大きな選択ボタン */
+    .menu { max-width: 480px; margin: 28px auto 0; padding: 0 16px; display: flex; flex-direction: column; gap: 14px; }
+    .menu-btn {
+      display: flex; align-items: center; gap: 16px; width: 100%;
+      padding: 22px 20px; text-align: left; cursor: pointer;
+      background: var(--white); border: 1px solid var(--line); border-radius: 6px; color: var(--sumi);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .menu-btn:hover { border-color: var(--kin); }
+    .menu-btn .mk {
+      flex-shrink: 0; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid var(--shu); border-radius: 4px; color: var(--shu);
+      font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700;
+    }
+    .menu-btn .tt { display: block; font-family: var(--kaisho); font-size: 21px; font-weight: 600; letter-spacing: 0.06em; }
+    .menu-btn .ds { display: block; font-size: 12px; color: var(--sumi-soft); margin-top: 2px; line-height: 1.6; }
+
+    /* 合言葉の人の表示・戻る */
+    .userbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 10px 16px; background: var(--white); border: 1px solid var(--line); border-radius: 6px;
+    }
+    .userbar .who { font-family: var(--kaisho); font-size: 18px; font-weight: 600; }
+    .back {
+      display: block; margin: 4px auto 0; padding: 10px 28px;
+      background: var(--white); border: 1px solid var(--line); border-radius: 4px;
+      color: var(--sumi); font-family: 'Shippori Mincho', serif; font-size: 14px; cursor: pointer;
+    }
+    .pass-big { font-size: 18px; letter-spacing: 0.1em; text-align: center; }
+
+    /* 一覧 */
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .list-item {
+      display: block; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer;
+      background: var(--washi); border: 1px solid var(--line); border-radius: 4px; color: var(--sumi);
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .list-item:hover { border-color: var(--kin); }
+    .list-item .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .list-item .p { font-family: 'Shippori Mincho', serif; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; }
+    .list-item .d { font-size: 12px; color: var(--sumi-soft); text-align: right; }
+    .list-item .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .st-chip { font-size: 12px; padding: 1px 8px; border-radius: 3px; border: 1px solid var(--line); background: var(--white); color: var(--sumi-soft); }
+    .st-chip.ok { border-color: var(--koke); color: var(--koke); }  /* 完了画面の .done と重ならない名前に */
+    .st-chip.wait { border-color: var(--kin); color: #7D6638; }
+    .st-chip.todo { border-color: var(--shu); color: var(--shu); }
+    .list-item .go { display: block; margin-top: 8px; font-size: 13px; color: var(--shu); font-weight: 500; }
+    .list-item .go.view { color: var(--sumi-soft); }
+
+    /* 一週間後：初回の写真 */
+    .first-photo { width: 100%; max-height: 360px; object-fit: contain; background: var(--washi-deep); border: 1px solid var(--line); border-radius: 4px; }
+    .first-none { padding: 26px 12px; text-align: center; font-size: 13px; color: var(--sumi-soft); background: var(--washi); border: 1px dashed var(--line); border-radius: 4px; }
+    .first-meta { font-size: 13px; color: var(--sumi-soft); margin-top: 8px; }
+    .first-meta a { color: var(--sumi); }
   </style>
 </head>
 <body>
@@ -274,105 +340,147 @@
 
   <!-- Ver2.0：「鑑定書は後日お届け」→「受付番号で結果を見られる」に変更 -->
   <!-- Ver3.0：「受付番号で」→「合言葉で」に変更 -->
+  <!-- Ver4.0：鑑定する場所を限定しない文面に変更 -->
   <p class="intro">
-    お預かりした写真をもとに、日本の暦や昔ながらの住まいの知恵から、
+    暮らしの場所の写真をお預かりして、日本の暦や昔ながらの住まいの知恵から、
     これからの過ごし方をそっと添えてお返しします。
-    鑑定ができあがりましたら、合言葉を入れて結果をご覧いただけます。
+    玄関・リビング・寝室・キッチンなど、どこの写真でもかまいません。
   </p>
 
-  <div class="form-wrap" id="formWrap">
-
-    <!-- 一　合言葉（Ver2.6 まで：お名前 → Ver3.0：合言葉。お名前は名簿から自動で入る） -->
-    <div class="card">
-      <div class="label"><span class="num">一</span>合言葉<span class="req">必須</span></div>
-      <div class="pass-row" id="passRow">
-        <input class="input" type="password" id="pass" maxlength="40" placeholder="お知らせした合言葉" autocomplete="current-password" />
-        <button class="btn-small" type="button" id="passBtn">確かめる</button>
-      </div>
-      <div class="pass-ok" id="passOk">
-        <span class="who" id="passWho"></span>
-        <button class="link-btn" type="button" id="passForget">別の合言葉にする</button>
-      </div>
-      <p class="hint" id="passHint">※ 一度確かめると、この端末が合言葉を覚えておきます。</p>
+  <!-- ===== ① トップ（Ver4.0 追加） ===== -->
+  <section class="screen" id="scTop">
+    <div class="menu">
+      <button class="menu-btn" type="button" id="goApply">
+        <span class="mk">申</span>
+        <span><span class="tt">鑑定を申し込む</span><span class="ds">写真を一枚送るだけ。できあがったら結果をお知らせします</span></span>
+      </button>
+      <button class="menu-btn" type="button" id="goList">
+        <span class="mk">覧</span>
+        <span><span class="tt">過去の鑑定をみる</span><span class="ds">鑑定書を見る・一週間後の写真を送る</span></span>
+      </button>
     </div>
+  </section>
 
-    <!-- 二　鑑定する場所（CONFIG.PLACES から生成） -->
-    <div class="card">
-      <div class="label"><span class="num">二</span>鑑定する場所<span class="req">必須</span></div>
-      <!-- Ver2.4まで: choices three・玄関のみ → Ver2.5: choices two（2×2）・3か所受付 -->
-      <div class="choices two" id="placeChoices"></div>
-      <!-- Ver3.0：「初回の受付番号を入れると」→「初回の受付を選ぶと」 -->
-      <p class="hint">※ ただいまは「玄関」「デスクまわり」「リビング」の3か所を承っています。<br>※ 一週間後は、初回の受付を選ぶと、初回と同じ場所が自動で選ばれます。</p>
+  <!-- ===== ② 合言葉（Ver4.0：トップのどちらかを選んだあとに出す。Ver3.0 までは申し込みの「一」） ===== -->
+  <section class="screen" id="scPass">
+    <div class="form-wrap">
+      <div class="card">
+        <div class="label">合言葉</div>
+        <input class="input pass-big" type="password" id="pass" maxlength="40" placeholder="お知らせした合言葉" autocomplete="current-password" />
+        <button class="submit" type="button" id="passBtn" style="margin-top:14px;">次へ</button>
+        <p class="hint">※ 一度入れると、この端末が合言葉を覚えておきます。次からはこの画面は出ません。</p>
+      </div>
+      <button class="back" type="button" data-back>トップへ戻る</button>
     </div>
+  </section>
 
-    <!-- 三　撮影の時期（CONFIG.PHASES から生成） -->
-    <div class="card">
-      <div class="label"><span class="num">三</span>撮影の時期<span class="req">必須</span></div>
-      <div class="choices two" id="phaseChoices"></div>
-      <p class="hint">※ 一週間後の写真は、初回と同じ位置・同じ向きから撮ってください。</p>
-      <!-- Ver2.0 追加：一週間後のときだけ表示
-           Ver3.0：受付番号の入力欄 → 初回の受付（場所・受付日時）から選ぶ一覧に変更 -->
-      <div class="code-box" id="codeBox">
-        <p class="sub">どの受付の一週間後ですか</p>
-        <div class="pick-list" id="pickList"></div>
-        <p class="code-note" id="codeNote"></p><!-- Ver2.6 追加 -->
-        <p class="hint">※ 初回の写真と見比べて鑑定します。</p>
+  <!-- ===== ③ 鑑定を申し込む（Ver4.0：写真・どこの写真か・気になっていること） ===== -->
+  <section class="screen" id="scApply">
+    <div class="form-wrap">
+      <div class="userbar"><span class="who" data-who></span><button class="link-btn" type="button" data-forget>別の合言葉にする</button></div>
+
+      <!-- 一　写真 -->
+      <div class="card">
+        <div class="label"><span class="num">一</span>写真<span class="req">必須</span></div>
+        <div class="upload">
+          <input type="file" id="photoA" accept="image/*" />
+          <div class="upload-mark" id="markA">＋</div>
+          <div class="upload-text" id="textA">タップして写真を選ぶ</div>
+        </div>
+        <img class="preview" id="prevA" alt="選んだ写真" />
+        <div class="notes">
+          <p>撮影のお願い</p>
+          <ul>
+            <li>人の顔や、書類・パソコン画面が写らないようにしてください</li>
+            <li>明るい時間帯に、場所の全体が入るように撮ってください</li>
+            <li>撮った位置を覚えておくと、一週間後の比較がしやすくなります</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 二　どこの写真か（Ver4.0 追加：場所の選択の代わりのひと言。任意） -->
+      <div class="card">
+        <div class="label"><span class="num">二</span>どこの写真ですか<span class="opt">任意</span></div>
+        <input class="input" type="text" id="placeNote" maxlength="20" placeholder="例）寝室、キッチン、玄関" />
+        <p class="hint">※ 一覧で見分けやすくなります。空欄でもかまいません。</p>
+      </div>
+
+      <!-- 三　気になっていること -->
+      <div class="card">
+        <div class="label"><span class="num">三</span>気になっていること<span class="opt">任意</span></div>
+        <textarea class="textarea" id="memoA" maxlength="200" placeholder="例）最近なんとなく落ち着かない、家族が忙しそう など"></textarea>
+      </div>
+
+      <button class="submit" type="button" id="submitA">鑑定をお願いする</button>
+      <button class="back" type="button" data-back>トップへ戻る</button>
+    </div>
+  </section>
+
+  <!-- ===== ④ 過去の鑑定（Ver4.0 追加：結果ページ Ver2.0 の一覧をこちらへ） ===== -->
+  <section class="screen" id="scList">
+    <div class="form-wrap">
+      <div class="userbar"><span class="who" data-who></span><button class="link-btn" type="button" data-forget>別の合言葉にする</button></div>
+      <div class="card">
+        <div class="label">過去の鑑定</div>
+        <div class="list" id="list"></div>
+        <p class="hint">※ 一週間後の写真がまだのものを選ぶと、一週間後の写真を送れます。</p>
+      </div>
+      <button class="back" type="button" data-back>トップへ戻る</button>
+    </div>
+  </section>
+
+  <!-- ===== ⑤ 一週間後の写真を送る（Ver4.0 追加：初回の写真を見ながら） ===== -->
+  <section class="screen" id="scWeek1">
+    <div class="form-wrap">
+      <div class="userbar"><span class="who" data-who></span><button class="link-btn" type="button" data-forget>別の合言葉にする</button></div>
+
+      <div class="card">
+        <div class="label">初回の写真</div>
+        <div id="firstBox"></div>
+        <p class="first-meta" id="firstMeta"></p>
+        <p class="hint">※ 初回と同じ位置・同じ向きから撮ってください。</p>
+      </div>
+
+      <!-- 一　写真 -->
+      <div class="card">
+        <div class="label"><span class="num">一</span>一週間後の写真<span class="req">必須</span></div>
+        <div class="upload">
+          <input type="file" id="photoW" accept="image/*" />
+          <div class="upload-mark" id="markW">＋</div>
+          <div class="upload-text" id="textW">タップして写真を選ぶ</div>
+        </div>
+        <img class="preview" id="prevW" alt="選んだ写真" />
+      </div>
+
+      <!-- 二　気になっていること -->
+      <div class="card">
+        <div class="label"><span class="num">二</span>気になっていること<span class="opt">任意</span></div>
+        <textarea class="textarea" id="memoW" maxlength="200" placeholder="例）片づけてから気分が軽い、まだ落ち着かない など"></textarea>
+      </div>
+
+      <button class="submit" type="button" id="submitW">一週間後の写真を送る</button>
+      <button class="back" type="button" id="backToList">一覧へ戻る</button>
+    </div>
+  </section>
+
+  <!-- ===== 完了（Ver2.0 追加 → Ver3.0 場所と受付日時 → Ver4.0 画面の一つに） ===== -->
+  <section class="screen" id="scDone">
+    <div class="done" style="display:block;">
+      <div class="card">
+        <h2>お預かりしました</h2>
+        <p id="doneText"></p>
+        <div class="receipt">
+          <div class="cap" id="receiptCap"></div>
+          <div class="no" id="receiptNo" style="font-size:22px;letter-spacing:0.08em;"></div>
+        </div>
+        <p style="font-size:12px;">「過去の鑑定をみる」の一覧に出てきます。</p>
+        <div class="btns">
+          <button class="btn-line btn-fill" type="button" id="doneList">過去の鑑定をみる</button>
+          <button class="btn-line" type="button" id="doneTop">トップへ戻る</button>
+        </div>
       </div>
     </div>
-
-    <!-- 四　写真 -->
-    <div class="card">
-      <div class="label"><span class="num">四</span>写真<span class="req">必須</span></div>
-      <div class="upload">
-        <input type="file" id="photo" accept="image/*" />
-        <div class="upload-mark" id="uploadMark">＋</div>
-        <div class="upload-text" id="uploadText">タップして写真を選ぶ</div>
-      </div>
-      <img class="preview" id="preview" alt="選んだ写真" />
-      <div class="notes">
-        <p>撮影のお願い</p>
-        <ul>
-          <li>人の顔や、書類・パソコン画面が写らないようにしてください（デスクまわりは特にご注意ください）</li>
-          <li>明るい時間帯に、場所の全体が入るように撮ってください</li>
-          <li>撮った位置を覚えておくと、一週間後の比較がしやすくなります</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- 五　気になっていること -->
-    <div class="card">
-      <div class="label"><span class="num">五</span>気になっていること<span class="opt">任意</span></div>
-      <textarea class="textarea" id="memo" maxlength="200" placeholder="例）最近なんとなく落ち着かない、家族が忙しそう など"></textarea>
-    </div>
-
-    <button class="submit" id="submit">鑑定をお願いする</button>
-
-    <!-- Ver2.2 追加：鑑定結果への入口
-         Ver3.0：この端末の受付番号の一覧をやめ、結果ページ（合言葉で一覧が出る）へのボタンだけに -->
-    <div class="card my-card">
-      <div class="label">鑑定結果を見る</div>
-      <a class="btn-line" href="result.html">これまでの鑑定を見る</a>
-      <p class="hint">※ 合言葉を入れると、これまでの鑑定が「場所と受付日時」の一覧で出てきます。</p>
-    </div>
-  </div>
-
-  <!-- 完了表示（Ver2.0：受付番号と結果ページへの導線を追加）
-       Ver3.0：受付番号の表示・コピーをやめ、場所と受付日時の表示に変更 -->
-  <div class="done" id="done">
-    <div class="card">
-      <h2>お預かりしました</h2>
-      <p id="doneText"></p>
-      <div class="receipt">
-        <div class="cap" id="receiptCap"></div>
-        <div class="no" id="receiptNo" style="font-size:22px;letter-spacing:0.08em;"></div>
-      </div>
-      <p style="font-size:12px;">結果ページで合言葉を入れると、一覧に出てきます。</p>
-      <div class="btns">
-        <a class="btn-line btn-fill" id="resultLink" href="result.html">結果ページを開く</a>
-        <button class="btn-line" id="again">続けてもう一枚送る</button>
-      </div>
-    </div>
-  </div>
+  </section>
 
   <footer><span>KAKERA PROJECT</span></footer>
 
@@ -424,6 +532,17 @@
     //   - 受付番号は裏で使うだけにして、画面には出さない（作り方は Ver2.0 のまま）
     //   - 完了画面：受付番号の表示・コピー → 場所と受付日時の表示に変更
     //   - この端末の受付番号の一覧（Ver2.2 の unki_kantei_codes）は使わなくなったので消す
+    // Ver4.0 (2026-11-10) 画面の作り直し（supabase_v4.sql / 結果ページ Ver2.1 / unki_sync.py Ver1.5 と同時）
+    //   - 画面を ①トップ（鑑定を申し込む／過去の鑑定をみる）→ ②合言葉 → ③申し込み・④一覧・⑤一週間後 に分けた
+    //     画面の切り替えは URL の # で行う（#apply #list #week1）。スマホの「戻る」でひとつ前の画面に戻れる
+    //   - 合言葉はトップのどちらかを選んだあとに聞く。この端末が覚えていれば合言葉の画面は飛ばす
+    //   - 申し込み：写真・どこの写真か（任意のひと言・20文字）・気になっていること の3つだけ
+    //     撮影の時期は「初回」に固定（一週間後は一覧から送る）。場所の選択はやめた（Supabase では place = other）
+    //   - 一覧：場所（ひと言）・受付日時と、初回・一週間後それぞれの状況（受付・鑑定中・鑑定済）を表示
+    //     一週間後がまだのものを選ぶと ⑤一週間後 へ、送ってあるものを選ぶと結果ページ（鑑定書）を開く
+    //   - 一週間後：初回の写真（鑑定の公開後に表示できる）を見ながら、写真と気になっていることを送る
+    //   - 登録：fortune_submit → fortune_submit_v4（場所の選択なし・ひと言つき）
+    //   - 結果ページ Ver2.0 の一覧はこちらに移した（結果ページは鑑定書の表示と印刷が中心）
     // =========================================================
 
     // ---------- 設定（ここだけ直せば運用を変えられる） ----------
@@ -431,38 +550,34 @@
       SUPABASE_URL: 'https://stbmuewuqmckqzeokynq.supabase.co',
       SUPABASE_KEY: 'sb_publishable_n4NhN1Fgoy-XETdivYstsQ_iUg1JaI6',
       BUCKET: 'fortune',
-      TABLE:  'fortune_requests',
       MAX_EDGE_PX:  2000,  // 縮小後の長辺
       JPEG_QUALITY: 0.85,
       CODE_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',  // Ver2.0 追加：受付番号に使う文字（Ver3.0 からは画面に出さない）
       CODE_LENGTH: 8,                                  // Ver2.0 追加
-      PLACES: [
-        // Ver2.4まで: 玄関のみ受付（机まわり・居間は準備中）
-        // Ver2.5: 名称を「デスクまわり」「リビング」に変更して受付開始。「その他」を準備中で追加
-        //         ※ other を受付開始するときは、Supabase の place の制約に 'other' を追加すること
-        { code: 'entrance', label: '玄関',         enabled: true  },
-        { code: 'desk',     label: 'デスクまわり', enabled: true  },
-        { code: 'living',   label: 'リビング',     enabled: true  },
-        { code: 'other',    label: 'その他',       enabled: false },
-      ],
-      PHASES: [
-        { code: 'first', label: '初回',     sub: 'はじめての写真' },
-        { code: 'week1', label: '一週間後', sub: '比べるための写真' },
-      ],
+      // Ver4.0：場所の選択ボタンはやめた。Ver3.0 までの受付の表示名と、新しい受付の保存先の名前だけに使う
+      //   Ver2.4まで: 玄関のみ受付 → Ver2.5: 3か所受付・その他は準備中 → Ver4.0: 新しい受付はすべて other
+      PLACES: { entrance: '玄関', desk: 'デスクまわり', living: 'リビング', other: '' },
+      NEW_PLACE: 'other',
+      PLACE_NOTE_MAX: 20,                              // Ver4.0 追加：どこの写真かのひと言
+      // TABLE（fortune_requests への直接登録）は Ver3.0 で使わなくなったので削除
+      // PHASES（時期の選択ボタン）は Ver4.0 で使わなくなったので削除
     };
 
     const HEADERS = {
       'apikey': CONFIG.SUPABASE_KEY,
       'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
     };
-    const PASS_KEY = 'unki_kantei_pass';   // Ver3.0 追加：結果ページ Ver2.0 と共通
+    const PASS_KEY = 'unki_kantei_pass';   // Ver3.0 追加：結果ページと共通
 
     // ---------- 状態 ----------
-    let selectedPlace = null;
-    let selectedPhase = null;
-    let selectedFile  = null;
-    let selectedFirst = null;   // Ver3.0 追加：一週間後で選んだ初回の受付
-    let member = null;          // Ver3.0 追加：合言葉で確かめた人 { pass, name, is_admin, items }
+    let member = null;      // Ver3.0 追加：合言葉で確かめた人 { pass, name, is_admin, items }
+    let fileA = null;       // Ver4.0：申し込みの写真
+    let fileW = null;       // Ver4.0：一週間後の写真
+    let week1Item = null;   // Ver4.0：一週間後を送る初回の受付
+    let afterPass = null;   // Ver4.0：合言葉のあとに開く画面（'apply' / 'list'）
+    let lastDone = null;    // Ver4.0：完了画面の内容
+
+    const $ = id => document.getElementById(id);
 
     // ---------- 受付番号（Ver2.0 追加。Ver3.0 からは裏で使うだけ） ----------
     function newCode() {
@@ -471,7 +586,6 @@
       crypto.getRandomValues(buf);
       return Array.from(buf, n => chars[n % chars.length]).join('');
     }
-    // Ver3.0：normalizeCode・formatCode・codeExists は不要になったので削除
 
     // ---------- 共通（Ver3.0 追加） ----------
     function esc(s) {
@@ -484,7 +598,8 @@
       const w = '日月火水木金土'[d.getDay()];
       return `${d.getMonth() + 1}月${d.getDate()}日（${w}）${p(d.getHours())}:${p(d.getMinutes())}`;
     }
-    const placeLabel = code => CONFIG.PLACES.find(p => p.code === code)?.label || code;
+    // Ver4.0：ひと言 → Ver3.0 までの場所の名前 → 「場所の指定なし」の順
+    const placeName = x => x.place_note || CONFIG.PLACES[x.place] || '場所の指定なし';
 
     async function rpc(name, body) {
       const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/${name}`, {
@@ -500,10 +615,19 @@
       locked:   '合言葉の打ち間違いが続いたため、しばらく受け付けを止めています。時間をおいてお試しください',
       notfound: '初回の受付が見つかりませんでした',
       already:  'この受付の一週間後の写真は、すでにお預かりしています',
-      dup:      'もう一度「鑑定をお願いする」を押してください',
+      dup:      'もう一度送ってください',
       memo:     '気になっていることは200文字までにしてください',
+      note:     'どこの写真かは20文字までにしてください',   // Ver4.0 追加
     };
     const errText = code => ERRORS[code] || '受付の登録に失敗しました';
+
+    // ---------- トースト ----------
+    function showToast(msg, type = '') {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
 
     // ---------- 合言葉（Ver3.0 追加） ----------
     function loadPass()  { try { return localStorage.getItem(PASS_KEY) || ''; } catch { return ''; } }
@@ -511,161 +635,160 @@
     function forgetPass(){ try { localStorage.removeItem(PASS_KEY); } catch { } }
     try { localStorage.removeItem('unki_kantei_codes'); } catch { }  // Ver2.2 の受付番号の記憶は使わない
 
-    function showMember() {
-      const ok = !!member;
-      document.getElementById('passRow').style.display = ok ? 'none' : 'flex';
-      document.getElementById('passOk').classList.toggle('show', ok);
-      document.getElementById('passHint').style.display = ok ? 'none' : 'block';
-      document.getElementById('passWho').textContent = ok ? `${member.name} さま` : '';
-      if (selectedPhase === 'week1') renderPicks();
-    }
-
+    // Ver3.0：画面に出す → Ver4.0：成功したら true を返すだけにして、画面の切り替えは呼ぶ側で
     async function login(pass, quiet = false) {
-      const btn = document.getElementById('passBtn');
-      btn.disabled = true; btn.textContent = '確認中…';
       try {
         const r = await rpc('fortune_login', { p_pass: pass });
         if (!r.ok) {
           if (r.error === 'pass') forgetPass();
           if (!quiet) showToast(errText(r.error), 'error');
           member = null;
-        } else {
-          member = { pass, name: r.name, is_admin: !!r.is_admin, items: r.items || [] };
-          savePass(pass);
+          return false;
         }
+        member = { pass, name: r.name, is_admin: !!r.is_admin, items: r.items || [] };
+        savePass(pass);
+        document.querySelectorAll('[data-who]').forEach(e => {
+          e.textContent = member.is_admin ? `${member.name} さま（全員分）` : `${member.name} さま`;
+        });
+        return true;
       } catch (e) {
         if (!quiet) showToast(e.message, 'error');
-      } finally {
-        btn.disabled = false; btn.textContent = '確かめる';
-        showMember();
+        return false;
       }
     }
 
-    document.getElementById('passBtn').addEventListener('click', () => {
-      const pass = document.getElementById('pass').value.trim();
+    $('passBtn').addEventListener('click', async () => {
+      const pass = $('pass').value.trim();
       if (!pass) { showToast('合言葉を入力してください', 'error'); return; }
-      login(pass);
+      const btn = $('passBtn');
+      btn.disabled = true; btn.textContent = '確かめています…';
+      const ok = await login(pass);
+      btn.disabled = false; btn.textContent = '次へ';
+      if (ok) go(afterPass || 'top', true);
     });
-    document.getElementById('pass').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('passBtn').click();
-    });
-    document.getElementById('passForget').addEventListener('click', () => {
-      forgetPass(); member = null;
-      document.getElementById('pass').value = '';
-      selectFirst(null);
-      showMember();
-    });
+    $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') $('passBtn').click(); });
+    document.querySelectorAll('[data-forget]').forEach(b => b.addEventListener('click', () => {
+      forgetPass(); member = null; $('pass').value = '';
+      go('top');
+      showToast('この端末から合言葉を消しました');
+    }));
 
-    // ---------- 選択ボタンの生成 ----------
-    function buildChoices(containerId, items, onSelect) {
-      const box = document.getElementById(containerId);
-      items.forEach(item => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'choice';
-        btn.dataset.code = item.code;
-        const sub = item.enabled === false ? '準備中' : (item.sub || '');
-        btn.innerHTML = `${item.label}${sub ? `<small>${sub}</small>` : ''}`;
-        if (item.enabled === false) btn.disabled = true;
-        btn.dataset.enabled = item.enabled === false ? '0' : '1';  // Ver2.6 追加：固定を解くときの元の状態
-        btn.addEventListener('click', () => {
-          box.querySelectorAll('.choice').forEach(b => b.classList.toggle('selected', b === btn));
-          onSelect(item.code);
-        });
-        box.appendChild(btn);
-      });
+    // ---------- 画面の切り替え（Ver4.0 追加） ----------
+    // 合言葉が要る画面は、合言葉がまだなら先に ②合言葉 を出す
+    const NEED_PASS = ['apply', 'list', 'week1'];
+    function go(name, replace = false) {
+      const hash = name === 'top' ? '' : `#${name}`;
+      const url = location.pathname + location.search + hash;
+      if (replace) history.replaceState(null, '', url); else history.pushState(null, '', url);
+      show(name);
     }
-    buildChoices('placeChoices', CONFIG.PLACES, code => { selectedPlace = code; });
-    buildChoices('phaseChoices', CONFIG.PHASES, code => {
-      selectedPhase = code;
-      // Ver2.0 追加：一週間後のときだけ受付番号欄を表示（Ver3.0：初回の受付の一覧に）
-      document.getElementById('codeBox').classList.toggle('show', code === 'week1');
-      // Ver2.6：一週間後なら初回の場所を調べる → Ver3.0：初回の受付の一覧を出す
-      if (code === 'week1') renderPicks();
-      else { selectFirst(null); }
-    });
-
-    // ---------- 初回の場所を自動で選ぶ（Ver2.6 追加） ----------
-    let lockedPlace = null;   // 初回から決まった場所（固定中）
-
-    function setCodeNote(text, isErr = false) {
-      const n = document.getElementById('codeNote');
-      n.textContent = text;
-      n.classList.toggle('err', isErr);
+    async function show(name) {
+      if (NEED_PASS.includes(name) && !member) {
+        const saved = loadPass();
+        if (saved && await login(saved, true)) return show(name);
+        afterPass = name === 'week1' ? 'list' : name;
+        name = 'pass';
+      }
+      if (name === 'week1' && !week1Item) name = 'list';  // 一週間後は一覧から選んで入る
+      if (name === 'done' && !lastDone) name = 'top';
+      const ids = { top: 'scTop', pass: 'scPass', apply: 'scApply', list: 'scList', week1: 'scWeek1', done: 'scDone' };
+      Object.entries(ids).forEach(([k, id]) => $(id).classList.toggle('show', k === (ids[name] ? name : 'top')));
+      if (name === 'list') renderList();
+      if (name === 'week1') renderWeek1();
+      if (name === 'pass') setTimeout(() => $('pass').focus(), 50);
+      window.scrollTo({ top: 0 });
     }
+    const screenOfHash = () => (location.hash || '').slice(1) || 'top';
+    window.addEventListener('popstate', () => show(screenOfHash()));
 
-    function selectPlace(code) {
-      selectedPlace = code;
-      document.querySelectorAll('#placeChoices .choice')
-        .forEach(b => b.classList.toggle('selected', b.dataset.code === code));
+    $('goApply').addEventListener('click', () => go('apply'));
+    $('goList').addEventListener('click', () => go('list'));
+    document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => go('top')));
+    $('backToList').addEventListener('click', () => go('list'));
+    $('doneList').addEventListener('click', () => go('list', true));
+    $('doneTop').addEventListener('click', () => go('top', true));
+
+    // ---------- ④ 一覧（Ver4.0 追加。結果ページ Ver2.0 の一覧をもとに、初回・一週間後を分けて表示） ----------
+    function chips(x) {
+      const first = x.first_done ? ['初回 鑑定済', 'ok'] : ['初回 鑑定中', 'wait'];
+      const week1 = x.week1_done ? ['一週間後 鑑定済', 'ok']
+                  : x.week1_at   ? ['一週間後 鑑定中', 'wait']
+                  :                ['一週間後 まだ', 'todo'];
+      return [first, week1].map(([t, c]) => `<span class="st-chip ${c}">${t}</span>`).join('');
     }
-
-    // code を渡すとその場所だけ押せる状態に。null で元に戻す
-    function lockPlaces(code) {
-      lockedPlace = code;
-      document.querySelectorAll('#placeChoices .choice').forEach(b => {
-        b.disabled = code ? b.dataset.code !== code : b.dataset.enabled === '0';
-      });
-    }
-    // Ver3.0：lookupFirstPlace（受付番号から調べる）は削除し、下の renderPicks / selectFirst に置き換え
-
-    // ---------- 一週間後：初回の受付から選ぶ（Ver3.0 追加） ----------
-    function renderPicks() {
-      const box = document.getElementById('pickList');
-      if (!member) {
-        box.innerHTML = '<p class="pick-empty">先に「一　合言葉」を確かめてください。</p>';
+    function renderList() {
+      const box = $('list');
+      const items = member?.items || [];
+      if (!items.length) {
+        box.innerHTML = '<p class="pick-empty">まだ鑑定の受付はありません。<br>トップの「鑑定を申し込む」から写真を送ってくださいね。</p>';
         return;
       }
-      // 一週間後をまだ送っていない初回だけ
-      const list = member.items.filter(x => x.first_at && !x.week1_at);
-      if (!list.length) {
-        box.innerHTML = '<p class="pick-empty">一週間後を送れる初回の受付はありません。</p>';
-        selectFirst(null);
-        return;
-      }
-      box.innerHTML = list.map(x => `
-        <button type="button" class="pick ${selectedFirst?.code === x.code ? 'selected' : ''}" data-code="${esc(x.code)}">
-          <span class="p">${esc(placeLabel(x.place))}</span>
-          <span class="d">${member.is_admin && x.name ? `${esc(x.name)} さま<br>` : ''}${esc(jpDate(x.first_at))} 受付</span>
+      box.innerHTML = items.map(x => `
+        <button type="button" class="list-item" data-code="${esc(x.code)}">
+          <span class="top">
+            <span class="p">${esc(placeName(x))}</span>
+            <span class="d">${member.is_admin && x.name ? `${esc(x.name)} さま<br>` : ''}${esc(jpDate(x.first_at || x.week1_at))} 受付</span>
+          </span>
+          <span class="chips">${chips(x)}</span>
+          ${x.first_at && !x.week1_at
+            ? '<span class="go">一週間後の写真を送る →</span>'
+            : '<span class="go view">鑑定書を見る →</span>'}
         </button>`).join('');
-      box.querySelectorAll('.pick').forEach(b => b.addEventListener('click', () => {
-        selectFirst(list.find(x => x.code === b.dataset.code));
-        box.querySelectorAll('.pick').forEach(o => o.classList.toggle('selected', o === b));
+      box.querySelectorAll('.list-item').forEach(b => b.addEventListener('click', () => {
+        const x = items.find(i => i.code === b.dataset.code);
+        if (x.first_at && !x.week1_at) { week1Item = x; go('week1'); }
+        else location.href = `result.html?code=${encodeURIComponent(x.code)}`;
       }));
     }
 
-    function selectFirst(item) {
-      selectedFirst = item || null;
-      if (item) {
-        selectPlace(item.place);
-        lockPlaces(item.place);
-        setCodeNote(`初回の場所「${placeLabel(item.place)}」を選びました`);
-      } else {
-        lockPlaces(null);
-        setCodeNote('');
+    // ---------- ⑤ 一週間後（Ver4.0 追加：初回の写真を見ながら送る） ----------
+    async function renderWeek1() {
+      const x = week1Item;
+      resetPhoto('W');
+      $('memoW').value = '';
+      $('firstMeta').innerHTML = `${esc(placeName(x))}　${esc(jpDate(x.first_at))} 受付`
+        + (x.first_done ? `　<a href="result.html?code=${encodeURIComponent(x.code)}">初回の鑑定書を見る</a>` : '');
+      const box = $('firstBox');
+      if (!x.first_done) {
+        box.innerHTML = '<div class="first-none">初回の写真は、鑑定ができあがるとここに出ます。<br>撮った位置を思い出して撮ってくださいね。</div>';
+        return;
+      }
+      box.innerHTML = '<div class="first-none">初回の写真を読み込んでいます…</div>';
+      try {
+        const r = await rpc('fortune_get_result_by_pass', { p_pass: member.pass, p_code: x.code });
+        const first = r.ok && (r.data?.results || []).find(q => q.phase === 'first');
+        if (week1Item !== x) return;  // 読み込み中に別の受付を選んだとき
+        box.innerHTML = first?.photo_url
+          ? `<img class="first-photo" src="${esc(first.photo_url)}" alt="初回の写真" onerror="this.outerHTML='<div class=&quot;first-none&quot;>初回の写真の表示期限が切れています</div>'">`
+          : '<div class="first-none">初回の写真を表示できませんでした</div>';
+      } catch {
+        box.innerHTML = '<div class="first-none">初回の写真を読み込めませんでした</div>';
       }
     }
 
-    // ---------- 写真プレビュー ----------
-    document.getElementById('photo').addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      selectedFile = file;
-      const img = document.getElementById('preview');
-      img.src = URL.createObjectURL(file);
-      img.style.display = 'block';
-      img.onerror = () => { img.style.display = 'none'; }; // HEICなど表示できない形式
-      document.getElementById('uploadMark').textContent = '✓';
-      document.getElementById('uploadText').textContent = file.name;
-    });
-
-    // ---------- トースト ----------
-    function showToast(msg, type = '') {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.className = `toast ${type} show`;
-      setTimeout(() => { t.className = 'toast'; }, 3000);
+    // ---------- 写真の選択とプレビュー（Ver4.0：申し込み A と一週間後 W の2か所に） ----------
+    function bindPhoto(k) {
+      $(`photo${k}`).addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (k === 'A') fileA = file; else fileW = file;
+        const img = $(`prev${k}`);
+        img.src = URL.createObjectURL(file);
+        img.style.display = 'block';
+        img.onerror = () => { img.style.display = 'none'; }; // HEICなど表示できない形式
+        $(`mark${k}`).textContent = '✓';
+        $(`text${k}`).textContent = file.name;
+      });
     }
+    function resetPhoto(k) {
+      if (k === 'A') fileA = null; else fileW = null;
+      $(`photo${k}`).value = '';
+      $(`prev${k}`).style.display = 'none';
+      $(`mark${k}`).textContent = '＋';
+      $(`text${k}`).textContent = 'タップして写真を選ぶ';
+    }
+    bindPhoto('A');
+    bindPhoto('W');
 
     // ---------- 写真の縮小（失敗したら元のまま） ----------
     function shrinkImage(file) {
@@ -702,9 +825,10 @@
     // ---------- 写真のアップロード（非公開バケット） ----------
     // Ver1.0: entrance/20261027_153012_first_k3x9.jpg
     // Ver2.0: entrance/K7M3QX2A_first_20261027_153012.jpg（受付番号で並ぶように）
-    async function uploadPhoto(code) {
-      const { blob, ext, type } = await shrinkImage(selectedFile);
-      const path = `${selectedPlace}/${code}_${selectedPhase}_${stamp()}.${ext}`;
+    // Ver4.0: 場所・時期・写真を引数で受け取る（新しい受付は other/…、一週間後は初回の場所/…）
+    async function uploadPhoto(file, place, code, phase) {
+      const { blob, ext, type } = await shrinkImage(file);
+      const path = `${place}/${code}_${phase}_${stamp()}.${ext}`;
       const res = await fetch(`${CONFIG.SUPABASE_URL}/storage/v1/object/${CONFIG.BUCKET}/${path}`, {
         method: 'POST',
         headers: { ...HEADERS, 'Content-Type': type },
@@ -714,90 +838,72 @@
       return path;
     }
 
-    // ---------- 送信 ----------
-    document.getElementById('submit').addEventListener('click', async () => {
-      const memo = document.getElementById('memo').value.trim();
-
-      // Ver2.6 まで：お名前・受付番号の確認 → Ver3.0：合言葉・初回の受付の確認
-      if (!member)        { showToast('先に合言葉を確かめてください', 'error'); return; }
-      if (!selectedPlace) { showToast('鑑定する場所を選んでください', 'error'); return; }
-      if (!selectedPhase) { showToast('撮影の時期を選んでください', 'error'); return; }
-      if (selectedPhase === 'week1' && !selectedFirst) {
-        showToast('どの受付の一週間後かを選んでください', 'error'); return;
-      }
-      // Ver2.6 追加：一週間後は初回と同じ場所であること
-      if (selectedPhase === 'week1' && lockedPlace !== selectedPlace) {
-        showToast('初回の場所を確認できません。初回の受付を選び直してください', 'error'); return;
-      }
-      if (!selectedFile)  { showToast('写真を選んでください', 'error'); return; }
-
-      const btn = document.getElementById('submit');
+    // ---------- 送信（Ver4.0：申し込みと一週間後で共通） ----------
+    async function submit({ btn, label, file, place, code, phase, memo, placeNote }) {
       btn.disabled = true;
       btn.textContent = 'お預かりしています…';
-
       try {
-        // Ver2.0 追加：受付番号の決定（Ver3.0：一週間後は選んだ初回の番号）
-        const code = selectedPhase === 'first' ? newCode() : selectedFirst.code;
-
-        const photoPath = await uploadPhoto(code);
-        // Ver2.6 まで：fortune_requests へ直接登録 → Ver3.0：fortune_submit（合言葉が必要）
-        const r = await rpc('fortune_submit', {
+        const photoPath = await uploadPhoto(file, place, code, phase);
+        // Ver2.6 まで：直接登録 → Ver3.0：fortune_submit → Ver4.0：fortune_submit_v4
+        const r = await rpc('fortune_submit_v4', {
           p_pass: member.pass,
           p_code: code,
-          p_place: selectedPlace,
-          p_phase: selectedPhase,
+          p_phase: phase,
           p_memo: memo || null,
           p_photo_path: photoPath,
+          p_place_note: placeNote || null,
         });
         if (!r.ok) throw new Error(errText(r.error));
-
-        showDone(r.place);
-        login(member.pass, true);  // 一覧を新しくする（一週間後の選択肢に反映）
+        lastDone = { phase, name: placeName(r) };
+        await login(member.pass, true);  // 一覧を新しくする
+        go('done', true);
+        renderDone();
+        return true;
       } catch (e) {
         showToast(e.message, 'error');
+        return false;
       } finally {
         btn.disabled = false;
-        btn.textContent = '鑑定をお願いする';
+        btn.textContent = label;
       }
-    });
-
-    // ---------- この端末の受付番号（Ver2.2 追加） ----------
-    // Ver3.0：合言葉で一覧が出るようになったため削除（loadCodes / saveCode / renderMyCodes）
-
-    // ---------- 完了画面（Ver2.0 追加） ----------
-    // Ver3.0：受付番号の表示・コピー → 場所と受付日時の表示に変更
-    function showDone(place) {
-      document.getElementById('doneText').innerHTML = selectedPhase === 'first'
-        ? `${esc(member.name)} さま、ありがとうございます。<br>鑑定ができあがりましたら、結果ページでご覧いただけます。<br>一週間後にも、同じ場所の写真をお願いしますね。`
-        : `${esc(member.name)} さま、ありがとうございます。<br>初回の写真と見比べて鑑定します。<br>できあがりましたら、結果ページでご覧いただけます。`;
-      document.getElementById('receiptCap').textContent =
-        `${placeLabel(place)}（${CONFIG.PHASES.find(p => p.code === selectedPhase)?.label || ''}）`;
-      document.getElementById('receiptNo').textContent = `${jpDate(new Date().toISOString())} 受付`;
-      document.getElementById('formWrap').style.display = 'none';
-      document.getElementById('done').style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ---------- 続けてもう一枚（合言葉は残す） ----------
-    document.getElementById('again').addEventListener('click', () => {
-      selectedPhase = null;
-      selectedFile  = null;
-      document.getElementById('memo').value = '';
-      document.getElementById('photo').value = '';
-      document.getElementById('preview').style.display = 'none';
-      document.getElementById('uploadMark').textContent = '＋';
-      document.getElementById('uploadText').textContent = 'タップして写真を選ぶ';
-      document.getElementById('codeBox').classList.remove('show');
-      selectFirst(null);  // Ver2.6：lockPlaces(null) → Ver3.0：初回の選択も解く
-      document.querySelectorAll('#phaseChoices .choice').forEach(b => b.classList.remove('selected'));
-      document.getElementById('done').style.display = 'none';
-      document.getElementById('formWrap').style.display = 'flex';
+    // ③ 申し込み（いつも初回）
+    $('submitA').addEventListener('click', async () => {
+      if (!member) { go('apply'); return; }
+      if (!fileA) { showToast('写真を選んでください', 'error'); return; }
+      const ok = await submit({
+        btn: $('submitA'), label: '鑑定をお願いする', file: fileA,
+        place: CONFIG.NEW_PLACE, code: newCode(), phase: 'first',
+        memo: $('memoA').value.trim(), placeNote: $('placeNote').value.trim().slice(0, CONFIG.PLACE_NOTE_MAX),
+      });
+      if (ok) { resetPhoto('A'); $('memoA').value = ''; $('placeNote').value = ''; }
     });
 
-    // ---------- 開いたとき：覚えている合言葉で入る（Ver3.0 追加） ----------
-    showMember();
-    const saved = loadPass();
-    if (saved) { document.getElementById('pass').value = saved; login(saved, true); }
+    // ⑤ 一週間後（場所は初回のものを使う）
+    $('submitW').addEventListener('click', async () => {
+      if (!member || !week1Item) { go('list'); return; }
+      if (!fileW) { showToast('一週間後の写真を選んでください', 'error'); return; }
+      const ok = await submit({
+        btn: $('submitW'), label: '一週間後の写真を送る', file: fileW,
+        place: week1Item.place, code: week1Item.code, phase: 'week1',
+        memo: $('memoW').value.trim(),
+      });
+      if (ok) { resetPhoto('W'); week1Item = null; }
+    });
+
+    // ---------- 完了画面（Ver2.0 追加 → Ver3.0 場所と受付日時 → Ver4.0 画面の一つに） ----------
+    function renderDone() {
+      const d = lastDone;
+      $('doneText').innerHTML = d.phase === 'first'
+        ? `${esc(member.name)} さま、ありがとうございます。<br>鑑定ができあがりましたら、「過去の鑑定をみる」でご覧いただけます。<br>一週間後にも、同じ場所の写真をお願いしますね。`
+        : `${esc(member.name)} さま、ありがとうございます。<br>初回の写真と見比べて鑑定します。<br>できあがりましたら、「過去の鑑定をみる」でご覧いただけます。`;
+      $('receiptCap').textContent = `${d.name}（${d.phase === 'first' ? '初回' : '一週間後'}）`;
+      $('receiptNo').textContent = `${jpDate(new Date().toISOString())} 受付`;
+    }
+
+    // ---------- 開いたとき（Ver3.0：覚えている合言葉で入る → Ver4.0：URL の # の画面を開く） ----------
+    show(screenOfHash());
   </script>
 </body>
 </html>

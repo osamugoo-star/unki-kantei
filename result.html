@@ -44,6 +44,7 @@
          - 受付番号の入力 → 合言葉の入力に変更（.input の大文字・字間の指定は合言葉欄では外す .input.pass）
          - 自分の鑑定の一覧（場所・受付日時・状況）のスタイルを追加（.list-*）
          - 鑑定書の頭書きから受付番号を外す（HTML は JS で作るので CSS の変更はなし）
+       Ver2.1 (2026-11-10) 受付フォーム Ver4.0 と同時（CSS の変更なし。画面下のボタンの文言だけ変更）
        ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -311,10 +312,11 @@
     </div>
     <div id="out"></div>
     <!-- Ver1.1 追加：受付フォームへ戻る（番号入力画面でも表示）
-         Ver2.0：「一覧へ戻る」「合言葉を忘れる」を追加 -->
+         Ver2.0：「一覧へ戻る」「合言葉を忘れる」を追加
+         Ver2.1：一覧は受付フォーム Ver4.0 の「過去の鑑定をみる」へ。「受付へ戻る」→「トップへ戻る」 -->
     <div class="nav no-print" id="nav">
-      <button class="btn-line" id="backBtn" style="display:none;">一覧へ戻る</button>
-      <a class="btn-line" href="index.html">受付へ戻る</a>
+      <button class="btn-line" id="backBtn" style="display:none;">過去の鑑定へ戻る</button>
+      <a class="btn-line" href="index.html">トップへ戻る</a>
     </div>
     <p class="center no-print" id="forgetWrap" style="display:none;">
       <button class="link-btn" id="forgetBtn">この端末で合言葉を忘れる</button>
@@ -365,6 +367,12 @@
     //     ただし合言葉が合っていて、自分の受付（管理者は全員）のときだけ表示
     //   - 「別の受付番号で見る」→「一覧へ戻る」に変更
     //   - Ver1.2 の受付番号の記憶（unki_kantei_codes）は使わなくなったので消す
+    // Ver2.1 (2026-11-10) 受付フォーム Ver4.0 / supabase_v4.sql と同時
+    //   - 鑑定の一覧は受付フォーム Ver4.0 の「過去の鑑定をみる」（index.html#list）に移した
+    //     ?code= なしで開いたとき・「過去の鑑定へ戻る」・スマホの「戻る」は、そちらへ移る
+    //     （この画面の一覧 showList は、受付フォームを開けないときの予備として残す）
+    //   - 場所の表示：どこの写真かのひと言（place_note）があればそれを出す。無ければ Ver2.0 までの場所の名前
+    //   - 「写真を送る」（一週間後のお願い）の行き先：index.html → index.html#list
     // =========================================================
 
     const CONFIG = {
@@ -373,6 +381,7 @@
       CODE_LENGTH: 8,
       // Ver1.4まで: 机まわり・居間 → Ver1.5: デスクまわり・リビング、その他を追加
       PLACES: { entrance: '玄関', desk: 'デスクまわり', living: 'リビング', other: 'その他' },
+      LIST_URL: 'index.html#list',  // Ver2.1 追加：鑑定の一覧（受付フォーム Ver4.0）
       PHASES: { first: '初回', week1: '一週間後' },
     };
 
@@ -426,6 +435,8 @@
     }
 
     let member = null;  // { pass, name, is_admin, items }
+    // Ver2.1 追加：場所の表示名（ひと言 → 場所の名前 → 指定なし）
+    const placeName = x => x.place_note || (x.place === 'other' ? '' : CONFIG.PLACES[x.place]) || '場所の指定なし';
 
     // 一覧の日時：2026年11月3日（火）20:15
     function jpDateW(iso) {
@@ -451,7 +462,7 @@
         savePass(pass);
         const qCode = new URLSearchParams(location.search).get('code');
         if (qCode && member.items.some(x => x.code === qCode)) openResult(qCode, true);
-        else showList();
+        else location.replace(CONFIG.LIST_URL);  // Ver2.0: showList() → Ver2.1: 受付フォームの一覧へ
       } catch (e) {
         if (e.code === 'pass') forgetPass();
         if (!quiet || e.code !== 'pass') showToast(e.message);
@@ -485,7 +496,7 @@
             return `
               <button class="list-item" data-code="${esc(x.code)}">
                 <span>
-                  <span class="p">${esc(CONFIG.PLACES[x.place] || x.place)}</span>
+                  <span class="p">${esc(placeName(x))}</span><!-- Ver2.1: CONFIG.PLACES[x.place] → placeName(x) -->
                   <span class="d" style="display:block;">${member.is_admin && x.name ? `${esc(x.name)} さま　` : ''}${esc(jpDateW(x.first_at || x.week1_at))} 受付</span>
                 </span>
                 <span class="st ${st.done ? 'done' : ''}">${st.text}</span>
@@ -516,14 +527,16 @@
       login(pass);
     });
     $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') $('showBtn').click(); });
-    $('backBtn').addEventListener('click', () => { if (member) showList(); });
+    // Ver2.0: showList() → Ver2.1: 受付フォームの一覧へ
+    $('backBtn').addEventListener('click', () => { location.href = CONFIG.LIST_URL; });
     $('forgetBtn').addEventListener('click', () => {
       forgetPass(); $('pass').value = ''; showPassCard();
       history.replaceState(null, '', location.pathname);
       showToast('この端末から合言葉を消しました');
     });
     // スマホの「戻る」で一覧に戻れるように
-    window.addEventListener('popstate', () => { if (member) showList(); });
+    // Ver2.1：一覧は受付フォームにあるので、そちらへ
+    window.addEventListener('popstate', () => { if (member) location.replace(CONFIG.LIST_URL); });
 
     // ---------- 表示 ----------
     // Ver1.7: cls を追加（書き込み写真は 'marked'）
@@ -634,7 +647,7 @@
             <div class="who">${esc(data.name)} さま</div>
             <div class="meta">
               <!-- Ver2.0：受付番号の表示を外す -->
-              <span>鑑定場所：${esc(CONFIG.PLACES[data.place] || data.place)}</span>
+              <span>鑑定場所：${esc(placeName(data))}</span><!-- Ver2.1: placeName に -->
             </div>
             <div class="meta"><span>受付　${received}</span></div>
           </div>
@@ -655,7 +668,7 @@
         } else if (week1Received) {
           html += `<div class="card wait no-print"><h2>一週間後の鑑定中です</h2><p>初回と見比べた結果は、もうしばらくお待ちください。</p></div>`;
         } else {
-          html += `<div class="card wait no-print"><p>一週間後に同じ場所・同じ向きから撮った写真を送っていただくと、<br>初回と見比べた鑑定をお届けします。</p><p style="margin-top:14px;"><a class="btn-line" href="index.html">写真を送る</a></p></div>`;
+          html += `<div class="card wait no-print"><p>一週間後に同じ場所・同じ向きから撮った写真を送っていただくと、<br>初回と見比べた鑑定をお届けします。</p><p style="margin-top:14px;"><a class="btn-line" href="${CONFIG.LIST_URL}">写真を送る</a></p></div>`;
         }
         html += `
           <div class="actions no-print">
